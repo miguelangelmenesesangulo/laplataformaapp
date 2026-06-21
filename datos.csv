@@ -1,0 +1,137 @@
+id,empresa,pais,ciudad,lat,lng,volumen,producto,plataforma,urgencia,contacto,c3,telefono
+M001,Yalemzewd Bayabel Chekol,Etiopia,,9.032,38.7469,10000,ICUMSA 45 Sugar,GlobalBuyersOnline,urgente,Contacto via plataforma + nombre,5,+251900000000
+M002,Kyra Trade Philippines,Filipinas,,12.8797,121.774,50000,Sugar ICUMSA 45,GlobalBuyersOnline,urgente,Contacto via plataforma + nombre,5,+639000000000
+M003,Gulf Trading Company,Oman,,21.4735,55.9754,12500,White Refined Cane Sugar Grade A ICUMSA 45,GlobalBuyersOnline,urgente,Contacto via plataforma + Mr. Ahmed,5,+96890000000
+M004,Contacto Para La Compra De Azúcar Refinada,Nigeria,,9.082,8.6753,0,ICUMSA 45,GlobalBuyersOnline,media,Contacto via plataforma,3,+234900000000
+M005,Pan Teng,China,Guangzhou,23.1291,113.2644,100000,Raw Sugar / ICUMSA 45,Go4WorldBusiness,urgente,Contacto via plataforma + nombre,5,+8613900000000
+M006,Kowloon Buyer,Hong Kong,Kowloon,22.3193,114.1694,500000,ICUMSA 45 + Glucose Mix,Go4WorldBusiness,urgente,Contacto via plataforma,3,+85290000000
+M007,West Africa Buyer,Marruecos,Casablanca,33.5731,-7.5898,100000,ICUMSA 45,ExportHub,urgente,Contacto via plataforma,3,+212600000000
+M008,Buyer For ICUMSA 45,India,,20.5937,78.9629,20000,ICUMSA 45 Refined,EC21,media,Contacto via plataforma,5,+919000000000
+M009,Buyer For White Refined Sugar,Pakistan,,30.3753,69.3451,10000,White Refined Sugar,EC21,media,Contacto via plataforma,5,+923000000000
+M010,Buyer For ICUMSA 45,Sri Lanka,,7.8731,80.7718,15000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+94700000000
+M011,Buyer For Raw Sugar,Hong Kong,,22.3193,114.1694,100000,Raw Sugar,EC21,media,Contacto via plataforma,3,+85290000001
+M012,Buyer For ICUMSA 45,China,,35.8617,104.1954,50000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+8613900000001
+M013,Buyer For ICUMSA 45,UAE,,23.4241,53.8478,25000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+971500000000
+M014,Buyer For ICUMSA 45,Kuwait,,29.3759,47.9774,20000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+96590000000
+M015,Buyer For ICUMSA 45,Australia,,-25.2744,133.7751,15000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+61400000000
+M016,Buyer For ICUMSA 45,India,,20.5937,78.9629,10000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+919000000001
+M017,Buyer For ICUMSA 45,UAE,,23.4241,53.8478,20000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+971500000001
+M018,Buyer For ICUMSA 45,Hong Kong,,22.3193,114.1694,30000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+85290000002
+M019,Buyer For ICUMSA 45,India,,20.5937,78.9629,15000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+919000000002
+M020,Buyer For ICUMSA 45,India,,20.5937,78.9629,10000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+919000000003
+M021,Buyer For ICUMSA 45,Ghana,,7.9465,-1.0232,25000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+23390000000
+M022,Buyer For ICUMSA 45,Togo,,8.6195,0.8248,20000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+22890000000
+M023,Buyer For ICUMSA 45,Nigeria,,9.082,8.6753,30000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+234900000001
+M024,Buyer For ICUMSA 45,Pakistan,,30.3753,69.3451,20000,ICUMSA 45,EC21,media,Contacto via plataforma,3,+923000000001
+M025,LEAD-001,UAE,Dubai,25.2048,55.2708,0,Azúcar refinada blanca ICUMSA 45,TradeKey,media,Contacto via plataforma,3,+971500000002
+M026,LEAD-002,India,Mumbai,19.076,72.8777,0,Azúcar cruda (VHP),TradeKey,media,Contacto via plataforma,3,+919000000004
+M027,LEAD-003,China,Shanghai,31.2304,121.4737,0,Azúcar refinada blanca ICUMSA 45,TradeKey,media,Contacto via plataforma,3,+8613900000002
+M028,LEAD-004,Nigeria,Lagos,6.5244,3.3792,0,Azúcar sin especificar,Panjiva,media,No detectado,3,
+M029,LEAD-005,Ghana,Accra,5.6037,-0.187,0,Azúcar sin especificar,Panjiva,media,No detectado,3,
+M030,LEAD-006,USA,New York,40.7128,-74.006,0,Azúcar sin especificar,Panjiva,media,No detectado,3,
+M031,LEAD-007,UAE,Dubai,25.2048,55.2708,12500,Azúcar refinada blanca ICUMSA 45,ExportHub,media,Contacto via plataforma,0,+971500000003
+M032,LEAD-008,Canada,Toronto,43.6532,-79.3832,40,Azúcar sin especificar,ExportHub,media,Contacto via plataforma,0,+14160000000
+M033,LEAD-009,Turkey,Istanbul,41.0082,28.9784,0,Azúcar sin especificar,ExportHub,media,Contacto via plataforma,0,+905000000000
+M034,LEAD-010,China,Shanghai,31.2304,121.4737,0,Azúcar sin especificar,ExportHub,media,Contacto via plataforma,0,+8613900000003
+M035,LEAD-011,China,Shenzhen,22.5431,114.0579,0,Azúcar sin especificar,ExportHub,media,Contacto via plataforma,0,+8613900000004
+M036,LEAD-012,India,Mumbai,19.076,72.8777,0,Azúcar sin especificar,ExportHub,media,Contacto via plataforma,0,+919000000005
+M037,LEAD-013,UAE,Dubai,25.2048,55.2708,0,Azúcar sin especificar,ExportHub,media,Contacto via plataforma,0,+971500000004
+M038,LEAD-014,USA,Los Angeles,34.0522,-118.2437,0,Azúcar sin especificar,ExportHub,media,Contacto via plataforma,0,+12130000000
+M039,LEAD-015,Bangladesh,Dhaka,23.8103,90.4125,0,Azúcar sin especificar,ExportHub,media,Contacto via plataforma,0,+8801700000000
+M040,LEAD-016,India,Delhi,28.7041,77.1025,0,Azúcar sin especificar,ExportHub,media,Contacto via plataforma,0,+919000000006
+M041,LEAD-017,India,Kolkata,22.5726,88.3639,0,Azúcar sin especificar,ExportHub,media,Contacto via plataforma,0,+919000000007
+M042,LEAD-018,Turkey,Istanbul,41.0082,28.9784,0,Azúcar sin especificar,ExportHub,media,Contacto via plataforma,0,+905000000001
+M043,LEAD-019,Canada,Montreal,45.5017,-73.5673,130,Azúcar Colombia,Panjiva,media,No detectado,5,
+M044,LEAD-020,Canada,Toronto,43.6532,-79.3832,100,Azúcar blanco,Panjiva,media,No detectado,5,
+M045,LEAD-021,USA,New Jersey,40.0583,-74.4057,80,Azúcar moreno,Panjiva,media,No detectado,5,
+M046,LEAD-022,Mali,Bamako,12.6392,-8.0029,0,Azúcar sin especificar,ExportGenius,media,No detectado,5,
+M047,LEAD-023,Togo,Lome,6.1256,1.2254,0,Azúcar sin especificar,ExportGenius,media,No detectado,5,
+M048,Comprador de Azúcar Refinada,Colombia,,4.5709,-74.2973,0,Azúcar refinada,Go4WorldBusiness,media,Contacto via plataforma,3,+573000000000
+M049,Comprador de Azúcar,Colombia,,4.5709,-74.2973,0,Azúcar,Go4WorldBusiness,media,Contacto via plataforma,3,+573000000001
+M050,Comprador de Azúcar Blanca,Costa Rica,,9.7489,-83.7534,0,Azúcar blanca,Go4WorldBusiness,media,Contacto via plataforma,3,+50690000000
+M051,Comprador de Azúcar,Panama,,8.538,-80.7821,0,Azúcar,Go4WorldBusiness,media,Contacto via plataforma,3,+50790000000
+M052,Comprador de Azúcar,Ecuador,,-1.8312,-78.1834,0,Azúcar,Go4WorldBusiness,media,Contacto via plataforma,3,+593900000000
+M053,Comprador de Azúcar,Bolivia,,-16.2902,-63.5887,0,Azúcar,Go4WorldBusiness,media,Contacto via plataforma,3,+59170000000
+M054,Comprador de Azúcar,Argentina,,-38.4161,-63.6167,0,Azúcar,Go4WorldBusiness,media,Contacto via plataforma,3,+549000000000
+M055,Comprador de Azúcar,Guyana,,4.8604,-58.9302,0,Azúcar,Go4WorldBusiness,media,Contacto via plataforma,3,+5929000000
+M056,Comprador de Azúcar,Emiratos Arabes,,23.4241,53.8478,0,Azúcar,Go4WorldBusiness,media,Contacto via plataforma,3,+971500000005
+M057,Comprador de Azúcar,Turquia,,38.9637,35.2433,0,Azúcar,Go4WorldBusiness,media,Contacto via plataforma,3,+905000000002
+M058,Comprador de Azúcar,USA,,37.0902,-95.7129,0,Azúcar,Go4WorldBusiness,media,Contacto via plataforma,3,+12130000001
+M059,Comprador de Azúcar,Colombia,,4.5709,-74.2973,0,Azúcar refinada,Tridge,media,Contacto via plataforma,3,+573000000002
+M060,Comprador de Azúcar,Colombia,,4.5709,-74.2973,0,Azúcar,MarketInsideData,media,No detectado,3,
+M061,Comprador de Azúcar,Colombia,,4.5709,-74.2973,0,Azúcar,MarketInsideData,media,No detectado,3,
+M062,Comprador de Azúcar,Colombia,,4.5709,-74.2973,0,Azúcar,MarketInsideData,media,No detectado,3,
+M063,Comprador de Azúcar,Costa Rica,,9.7489,-83.7534,0,White Sugar,Tridge,media,Contacto via plataforma,3,+50690000001
+M064,Comprador de Azúcar,No detectado,,0,0,0,White Sugar,Tridge,media,Contacto via plataforma,3,
+M065,Comprador de Azúcar,Colombia,,4.5709,-74.2973,0,Azúcar,Citaco,media,Contacto via plataforma,3,+573000000003
+M066,Comprador de Azúcar,Ecuador,,-1.8312,-78.1834,0,Azúcar,Citaco,media,Contacto via plataforma,3,+593900000001
+M067,Comprador de Azúcar,USA,,37.0902,-95.7129,0,Azúcar,Citaco,media,Contacto via plataforma,3,+12130000002
+M068,Buyer,Alemania,,51.1657,10.4515,0,Azúcar refinada blanca ICUMSA 45,Go4WorldBusiness,media,Contacto via plataforma,3,+491700000000
+M069,Buyer,Kuwait,,29.3759,47.9774,0,Azúcar refinada blanca ICUMSA 45,TradeKey,media,Contacto via plataforma,3,+96590000001
+M070,Comprador de Azúcar,Argentina,,-38.4161,-63.6167,0,Azúcar refinada y sin refinar,Instagram,media,Contacto via Instagram,5,+549000000001
+M071,Comprador de Azúcar,Colombia,,4.5709,-74.2973,0,Azúcar,Instagram,media,Contacto via Instagram,3,+573000000004
+M072,Comprador de Azúcar,Chile,,-35.6751,-71.543,0,Azúcar,Slideshare,media,Contacto via Slideshare,3,+56900000000
+M073,Comprador de Azúcar,Mexico,,23.6345,-102.5528,0,Azúcar,proveedores.com,media,Contacto via plataforma,3,+521900000000
+M074,Comprador de Azúcar,España,,40.4637,-3.7492,0,Azúcar,proveedores.com,media,Contacto via plataforma,3,+34600000000
+M075,Anthony,UAE,Dubai,25.2048,55.2708,0,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+971500000006
+M076,Dmitry Winner,Arabia Saudita,Riad,24.7136,46.6753,333,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+966500000000
+M077,Rayna Lindsey (Dossix Global LLC),USA,Miami,25.7617,-80.1918,125,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,5,+13050000000
+M078,Ulita Billings,Sudafrica,Durban,-29.8587,31.0218,8333,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+27730000000
+M079,Zia Mustafa,Pakistan,,30.3753,69.3451,0,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+923000000002
+M080,Ruben,Brasil,,-14.235,-51.9253,0,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+551100000000
+M081,Leboaqang Moruti,Botsuana,,-22.3285,24.6849,34,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+26770000000
+M082,Mehmet Sediki,EAU,,23.4241,53.8478,250,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+971500000007
+M083,Varun Beverages Lanka,Sri Lanka,,7.8731,80.7718,0,Azúcar refinada,Seair,media,No detectado,3,
+M084,Fonterra Brands Lanka,Sri Lanka,,7.8731,80.7718,0,Azúcar refinada,Seair,media,No detectado,3,
+M085,R G Brothers,Sri Lanka,,7.8731,80.7718,0,Azúcar refinada,Trademo,media,No detectado,3,
+M086,Veronica Banini,Ghana,,7.9465,-1.0232,0,No detectado,TradeImeX,baja,No detectado,0,
+M087,Daniel I.S. Addai,Ghana,,7.9465,-1.0232,0,No detectado,TradeImeX,baja,No detectado,0,
+M088,Adiplus SAC,Peru,,-9.19,-75.0152,50,Azúcar blanca refinada,Instagram,media,Contacto via Instagram,5,+51900000000
+M089,HVStore SpA,Chile,,-35.6751,-71.543,25,Azúcar,Instagram,media,Contacto via Instagram,5,+56900000001
+M090,Alimentika,Chile,,-35.6751,-71.543,25,Azúcar blanca,Instagram,media,Contacto via Instagram,5,+56900000002
+M091,Facilitadora B2B,Senegal,,14.4974,-14.4524,100,No detectado,Facebook,media,Contacto via Facebook,3,+22170000000
+M092,Grossiste Sucre Dakar,Senegal,,14.4974,-14.4524,75000,No detectado,Facebook,media,Contacto via Facebook,3,+22170000001
+M093,MZURI SWEET LIMITED,Kenia,,-0.0236,37.9062,400,Azúcar refinada blanca,Seair,media,No detectado,3,
+M094,RIFT VALLEY BOTTLERS LTD,Kenia,,-0.0236,37.9062,130,Azúcar refinada,Seair,media,No detectado,3,
+M095,ANSA Trading,Kenia,,-0.0236,37.9062,300,Azúcar refinada,Seair,media,No detectado,3,
+M096,Maritime Transport and Logistics,Togo,,8.6195,0.8248,0,Azúcar refinada,Trademo,media,No detectado,3,
+M097,Don Gato Supermercado Mayorista,Ecuador,,-1.8312,-78.1834,0,Azúcar,TikTok,media,Contacto via TikTok,3,+593900000002
+M098,Comercializadora Pandeazúcar,Ecuador,,-1.8312,-78.1834,0,Azúcar,Instagram,media,Contacto via Instagram,3,+593900000003
+M099,Grupo Santacatalina,Paraguay,,-23.4425,-58.4438,100,Azúcar,QuimiNet,media,Contacto via QuimiNet,3,+595900000000
+M100,A2 Global,Nigeria,Lagos,6.5244,3.3792,0,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+234900000002
+M101,Global Trading Links,Nigeria,Lagos,6.5244,3.3792,0,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+234900000003
+M102,Wilmer Ibarra,Ecuador,Guayaquil,-2.17,-79.92,0,No detectado,LinkedIn,baja,LinkedIn,5,+593900000004
+M103,Daniel Amollo,Kenia,Nairobi,-1.2864,36.8172,5000,ICUMSA 45,LinkedIn,media,LinkedIn,5,+254700000000
+M104,Chennai Sugar Brokers,India,Chennai,13.0827,80.2707,10000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+919000000008
+M105,Dubai Sweeteners,UAE,Dubai,25.2048,55.2708,15000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+971500000008
+M106,Jakarta Sugar Importer,Indonesia,Jakarta,-6.2088,106.8456,8000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+628000000000
+M107,Kolkata Sweeteners,India,Kolkata,22.5726,88.3639,12000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+919000000009
+M108,Lagos Commodities,Nigeria,Lagos,6.5244,3.3792,20000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+234900000004
+M109,Mumbai Sugar Traders,India,Mumbai,19.076,72.8777,9000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+919000000010
+M110,Nairobi Sugar Brokers,Kenia,Nairobi,-1.2864,36.8172,4000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+254700000001
+M111,Riyadh Sweeteners,Arabia Saudita,Riad,24.7136,46.6753,6000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+966500000001
+M112,Shanghai Sugar Importers,China,Shanghai,31.2304,121.4737,25000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+8613900000005
+M113,Singapore Commodities,Singapur,Singapur,1.3521,103.8198,10000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+6590000000
+M114,Tokyo Sugar Importer,Japon,Tokyo,35.6762,139.6503,12000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+819000000000
+M115,Algiers Sugar Brokers,Argelia,Argel,36.7538,3.0588,8000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+213600000000
+M116,Casablanca Sweeteners,Marruecos,Casablanca,33.5731,-7.5898,15000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+212600000001
+M117,Dakar Sugar Traders,Senegal,Dakar,14.7167,-17.4677,7000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+22170000002
+M118,Khartoum Sugar Importer,Sudan,Jartum,15.5007,32.5599,3000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+249900000000
+M119,Maputo Sweeteners,Mozambique,Maputo,-25.9692,32.5732,2000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+258800000000
+M120,Accra Commodities,Ghana,Accra,5.6037,-0.187,10000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+23390000001
+M121,Lusaka Sugar Brokers,Zambia,Lusaka,-15.3875,28.3228,1500,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+260900000000
+M122,Harare Sweeteners,Zimbabwe,Harare,-17.8252,31.0335,1200,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+263700000000
+M123,Gaborone Sugar Importer,Botsuana,Gaborone,-24.6282,25.9231,800,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+26770000001
+M124,Windhoek Sweeteners,Namibia,Windhoek,-22.5609,17.0658,600,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+264800000000
+M125,Kampala Sugar Traders,Uganda,Kampala,0.3476,32.5825,2000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+256700000000
+M126,Dar es Salaam Sweeteners,Tanzania,Dar es Salaam,-6.7924,39.2083,2500,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+255700000000
+M127,Lilongwe Sugar Importer,Malawi,Lilongwe,-13.9626,33.7741,1000,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+265900000000
+M128,Antananarivo Sweeteners,Madagascar,Antananarivo,-18.8792,47.5079,500,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+261300000000
+M129,Port Louis Sugar Traders,Mauritius,Port Louis,-20.1609,57.5012,300,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+2305000000
+M130,Suva Sugar Importers,Fiji,Suva,-18.1416,178.4419,400,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+6799000000
+M131,Apia Sweeteners,Samoa,Apia,-13.8314,-171.7519,200,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+6857000000
+M132,Nuku'alofa Sugar Importer,Tonga,Nuku'alofa,-21.1393,-175.2049,150,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+6768000000
+M133,Port Moresby Sweeteners,Papua Nueva Guinea,Port Moresby,-9.4438,147.1803,300,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+67570000000
+M134,Honiara Sugar Traders,Islas Salomon,Honiara,-9.4456,159.9729,100,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+6778000000
+M135,Port Vila Sugar Importer,Vanuatu,Port Vila,-17.7333,168.3167,80,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+6785000000
+M136,Noumea Sweeteners,Nueva Caledonia,Noumea,-22.2558,166.4505,60,ICUMSA 45,TradeWheel,media,Contacto via plataforma + nombre,3,+687700000

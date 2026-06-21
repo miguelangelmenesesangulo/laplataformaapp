@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>La Plataforma – UNAGRO S.A.</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        /* ============================================================
+           ROOT Y RESET (sin cambios)
+           ============================================================ */
+        :root {
+            --bg-0: #0a1628; --bg-1: #12233f; --panel: rgba(16,28,46,0.92);
+            --panel-2: rgba(20,35,60,0.82); --line: rgba(100,170,255,0.18);
+            --text: #eefcff; --muted: #8ea3b9; --blue: #3b82f6; --blue-2: #1d4ed8;
+            --red: #e53e3e; --yellow: #ecc94b; --green: #48bb78;
+            --shadow: rgba(0,0,0,0.55); --radius: 18px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            margin: 0; min-height: 100vh; overflow-x: hidden;
+            color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+            background: radial-gradient(circle at 12% 10%, rgba(59,130,246,.23), transparent 18%),
+                        radial-gradient(circle at 87% 82%, rgba(29,78,216,.28), transparent 17%),
+                        linear-gradient(135deg, #0a1628 0%, #1a2f4a 52%, #2a4c6e 130%);
+            background-attachment: fixed;
+        }
+        body::before {
+            content: ""; position: fixed; inset: 0;
+            background: linear-gradient(120deg, rgba(255,255,255,.06), transparent 30%, rgba(255,255,255,.04) 70%, transparent),
+                        repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 1px, transparent 1px 6px);
+            pointer-events: none; mix-blend-mode: screen; z-index: 0;
+        }
+        .scene { min-height: 100vh; display: grid; place-items: stretch; position: relative; z-index: 1; }
+        .device {
+            width: 100%; max-width: 100%; min-height: 100vh;
+            display: grid; grid-template-columns: 210px 1fr;
+            background: transparent; overflow: hidden;
+        }
+        .sidebar {
+            position: relative; z-index: 2;
+            padding: 24px 12px;
+            border-right: 1px solid rgba(255,255,255,.08);
+            background: linear-gradient(180deg, rgba(10,22,40,.72), rgba(18,35,63,.48));
+            display: flex; flex-direction: column; align-items: stretch;
+        }
+        .brand { display: flex; flex-direction: column; align-items: center; margin-bottom: 24px; padding-top: 8px; }
+        .brand-sub { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); background: rgba(255,255,255,0.04); padding: 2px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.04); }
+        .brand-title { font-size: 22px; font-weight: 800; color: #fff; margin-top: 2px; letter-spacing: -0.3px; background: linear-gradient(135deg, #fff, #93c5fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; }
+        .nav { display: grid; gap: 8px; flex: 1; align-content: start; margin-top: 4px; }
+        .nav-item { all: unset; display: flex; align-items: center; gap: 14px; height: 48px; padding: 0 14px; border-radius: 12px; color: #cfe2e7; cursor: pointer; font-size: 15px; transition: background .2s, color .2s, transform .2s; min-height: 48px; touch-action: manipulation; }
+        .nav-item:hover { background: rgba(59,130,246,.08); color: white; transform: translateX(2px); }
+        .nav-item.active { background: linear-gradient(90deg, rgba(59,130,246,.28), rgba(59,130,246,.1)); color: white; border: 1px solid rgba(59,130,246,.5); box-shadow: 0 0 22px rgba(59,130,246,.16) inset; }
+        .ico { width: 30px; font-size: 22px; color: #dffcff; opacity: .9; text-align: center; flex-shrink: 0; }
+        .dashboard { position: relative; z-index: 1; padding: 18px 18px 22px; overflow: hidden; display: flex; flex-direction: column; }
+        .topbar { height: 74px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.08); padding: 0 4px 14px 2px; flex-shrink: 0; }
+        .eyebrow { margin: 0; font-size: 18px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .12em; }
+        #sectionTitle { display: none; }
+        h1, h2, p { margin: 0; }
+        h1 { font-size: clamp(30px, 4vw, 48px); line-height: 1; font-weight: 760; letter-spacing: -.06em; }
+        .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .toolbar button, .ghost { border: 0; color: #d9f8fb; background: rgba(255,255,255,.05); border-radius: 999px; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; touch-action: manipulation; }
+        .status-dot { width: 46px; height: 4px; border-radius: 999px; background: linear-gradient(90deg, transparent, var(--blue)); box-shadow: 0 0 15px var(--blue); }
+        .user-badge { padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,.06); color: #cbe4e9; font-size: 13px; }
+        .urgent-strip { width: 100%; margin-bottom: 18px; background: rgba(0,0,0,0.2); border-radius: var(--radius); padding: 12px 0 12px 12px; border: 1px solid rgba(255,255,255,0.03); position: relative; overflow: hidden; }
+        .urgent-strip .strip-header { display: flex; justify-content: space-between; align-items: center; padding-right: 12px; margin-bottom: 10px; }
+        .urgent-strip .strip-header .label { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--yellow); display: flex; align-items: center; gap: 8px; }
+        .urgent-strip .strip-header .label .pulse-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--red); animation: pulse-dot 1.2s ease-in-out infinite; }
+        @keyframes pulse-dot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.3; transform:scale(0.6); } }
+        .card-scroll { display: flex; gap: 14px; overflow-x: auto; padding: 4px 4px 12px 4px; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; cursor: grab; user-select: none; }
+        .card-scroll::-webkit-scrollbar { display: none; }
+        .business-card {
+            flex: 0 0 280px; scroll-snap-align: start;
+            background: rgba(20,35,60,0.8); backdrop-filter: blur(12px);
+            border-radius: 16px; padding: 16px 18px;
+            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer; position: relative; min-width: 240px;
+        }
+        .business-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
+        .business-card.urgent { border-left: 3px solid var(--red); }
+        .business-card.media { border-left: 3px solid var(--yellow); }
+        .business-card.baja { border-left: 3px solid var(--green); }
+        .business-card .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; position: relative; z-index: 2; }
+        .business-card .card-country { font-size: 13px; font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+        .business-card .card-country .flag { font-size: 20px; }
+        .business-card .card-badge {
+            font-size: 10px; font-weight: 700; padding: 3px 12px;
+            border-radius: 20px; text-transform: uppercase;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+        .business-card .card-badge.urgent {
+            background: var(--red);
+            color: #fff;
+            animation: pulse-badge 1.5s ease-in-out infinite;
+        }
+        .business-card .card-badge.media {
+            background: rgba(236,201,75,0.25);
+            color: var(--yellow);
+        }
+        .business-card .card-badge.baja {
+            background: rgba(72,187,120,0.25);
+            color: var(--green);
+        }
+        @keyframes pulse-badge {
+            0%,100% { opacity:1; }
+            50% { opacity:0.4; }
+        }
+        .business-card .card-company { font-size: 17px; font-weight: 700; color: #fff; margin: 4px 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .business-card .card-details { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+        .business-card .card-volume { font-size: 19px; font-weight: 700; color: var(--blue); }
+        .business-card .card-volume .vol-unit { font-size: 11px; font-weight: 400; color: var(--muted); }
+        .business-card .card-product { font-size: 11px; color: var(--muted); background: rgba(255,255,255,0.04); padding: 2px 10px; border-radius: 12px; max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .business-card .card-action { margin-top: 10px; display: flex; gap: 8px; }
+        .business-card .card-action .btn-contact { flex:1; background: linear-gradient(135deg, #25D366, #128C7E); border: none; color: #fff; padding: 7px 0; border-radius: 20px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .business-card .card-action .btn-contact:hover { transform: scale(1.02); box-shadow: 0 4px 15px rgba(37,211,102,0.3); }
+        .business-card .card-action .btn-detail { flex: 0 0 38px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; color: var(--muted); font-size: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .business-card .card-action .btn-detail:hover { background: rgba(255,255,255,0.1); }
+        .carousel-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; background: rgba(10,22,40,0.7); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: background 0.2s; touch-action: manipulation; user-select: none; }
+        .carousel-arrow:hover { background: rgba(59,130,246,0.4); }
+        .carousel-arrow.left { left: 6px; }
+        .carousel-arrow.right { right: 6px; }
+        @media (max-width:720px) { .carousel-arrow { width:28px; height:28px; font-size:18px; } }
+        .map-card { grid-column: 1 / -1; min-height: 480px; padding: 0; overflow: hidden; border-radius: var(--radius); display: flex; flex-direction: column; position: relative; }
+        .map-card #map { width: 100%; flex: 1; min-height: 440px; background: #f0f4f8 !important; }
+        .map-title { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1001; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); padding: 6px 18px; border-radius: 20px; font-size: 14px; font-weight: 600; color: #fff; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; white-space: nowrap; }
+        .center-btn { position: absolute; bottom: 20px; right: 20px; z-index: 1001; background: rgba(59,130,246,0.85); backdrop-filter: blur(4px); border: none; color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        .center-btn:hover { background: rgba(59,130,246,1); }
+        .legend {
+            position: absolute; bottom: 20px; left: 20px; z-index: 1001;
+            background: rgba(255,255,255,0.92); backdrop-filter: blur(4px);
+            padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.06);
+            font-size: 11px; color: #1a202c; min-width: 150px; box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .legend-item:last-child { margin-bottom: 0; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+        .legend-dot.urgent { background: var(--red); box-shadow: 0 0 8px rgba(229,62,62,0.3); }
+        .legend-dot.media { background: var(--yellow); box-shadow: 0 0 8px rgba(236,201,75,0.3); }
+        .legend-dot.baja { background: var(--green); box-shadow: 0 0 8px rgba(72,187,120,0.3); }
+        .legend-dot.brazil { background: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.4); }
+        .legend-dot.india { background: #ecc94b; box-shadow: 0 0 8px rgba(236,201,75,0.4); }
+        .legend-dot.thailand { background: #48bb78; box-shadow: 0 0 8px rgba(72,187,120,0.4); }
+        .legend-dot.low { background: #d1d5db; }
+        .legend-divider { border-top: 1px solid rgba(0,0,0,0.08); margin: 6px 0; }
+        .legend-priority-title { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #4a5568; margin: 6px 0 4px 0; }
+        .view { display: none; flex: 1; overflow-y: auto; animation: fadeIn 0.4s ease; }
+        .view.active { display: flex; flex-direction: column; gap: 16px; }
+        @keyframes fadeIn { 0% { opacity:0; transform:translateY(12px); } 100% { opacity:1; transform:translateY(0); } }
+        .grid { display: grid; grid-template-columns: 1.6fr 1fr 190px; grid-auto-rows: minmax(180px, auto); gap: 16px; width: 100%; }
+        .card {
+            position: relative; padding: 18px; border-radius: var(--radius);
+            background: linear-gradient(180deg, rgba(255,255,255,.055), transparent 30%), var(--panel-2);
+            border: 1px solid rgba(255,255,255,.08);
+            box-shadow: 0 18px 45px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04);
+            overflow: hidden;
+        }
+        .card::before {
+            content: ""; position: absolute; inset: 0;
+            background: radial-gradient(circle at 10% 0%, rgba(59,130,246,.16), transparent 30%),
+                        linear-gradient(120deg, transparent, rgba(255,255,255,.025), transparent);
+            pointer-events: none;
+        }
+        .card-head { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+        .card-head.compact { margin-bottom: 14px; }
+        .label { font-size: 14px; font-weight: 650; letter-spacing: -.04em; color: #e9fbff; }
+        .muted { margin-top: 6px; color: var(--muted); font-size: 12px; }
+        .cta { position: relative; z-index: 1; width: 100%; border: 0; height: 44px; border-radius: 12px; color: #fff; font-weight: 760; background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 12px 25px rgba(59,130,246,.26); cursor: pointer; font-size: 15px; }
+
+        /* ============================================================
+           NUEVOS ESTILOS PARA MÉTRICAS MODERNAS
+           ============================================================ */
+        .kpi-row {
+            display: flex; gap: 16px; justify-content: space-between; flex-wrap: wrap;
+        }
+        .kpi-item {
+            flex: 1; min-width: 80px; text-align: center; background: rgba(255,255,255,0.03);
+            padding: 12px 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.04);
+        }
+        .kpi-item .kpi-icon { font-size: 24px; display: block; margin-bottom: 4px; }
+        .kpi-item .kpi-number { font-size: 28px; font-weight: 700; color: #fff; line-height: 1.2; }
+        .kpi-item .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+        .kpi-item .kpi-change { font-size: 11px; font-weight: 600; color: var(--green); background: rgba(72,187,120,0.15); padding: 0 8px; border-radius: 12px; display: inline-block; margin-top: 2px; }
+
+        .volumen-principal {
+            text-align: center; padding: 8px 0;
+        }
+        .volumen-principal .numero-grande {
+            font-size: 48px; font-weight: 700; color: var(--blue); line-height: 1.1;
+        }
+        .volumen-principal .unidad { font-size: 18px; font-weight: 400; color: var(--muted); }
+        .volumen-principal .barra-progreso {
+            margin: 12px auto 4px; width: 80%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden;
+        }
+        .volumen-principal .barra-progreso .relleno {
+            height: 100%; background: linear-gradient(90deg, var(--blue), #93c5fd); border-radius: 10px; width: 0%;
+        }
+        .volumen-principal .sub-texto { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+        .country-bar {
+            display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .country-bar .flag { font-size: 18px; width: 28px; text-align: center; }
+        .country-bar .country-name { font-size: 13px; color: #e9fbff; flex: 1; }
+        .country-bar .bar-bg { flex: 3; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+        .country-bar .bar-bg .bar-fill { height: 100%; background: var(--blue); border-radius: 10px; width: 0%; }
+        .country-bar .vol-value { font-size: 13px; font-weight: 600; color: #fff; min-width: 60px; text-align: right; }
+
+        .platform-bar {
+            display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .platform-bar .plat-name { font-size: 13px; color: #e9fbff; flex: 1; }
+        .platform-bar .plat-bg { flex: 2; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+        .platform-bar .plat-bg .plat-fill { height: 100%; border-radius: 10px; width: 0%; }
+        .platform-bar .plat-count { font-size: 13px; font-weight: 600; color: #fff; min-width: 50px; text-align: right; }
+
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 6px; background: rgba(72,187,120,0.15);
+            padding: 4px 14px; border-radius: 30px; font-size: 12px; color: var(--green);
+            border: 1px solid rgba(72,187,120,0.2);
+        }
+        .status-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse-dot 1.5s ease-in-out infinite; }
+        @keyframes pulse-dot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.3; transform:scale(0.6); } }
+
+        .leads-list { display: flex; flex-direction: column; gap: 10px; }
+        .lead-item { background: rgba(23,39,59,0.7); backdrop-filter: blur(8px); border-radius: 14px; padding: 14px 18px; border-left: 3px solid var(--blue); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; transition: background 0.2s; }
+        .lead-item:hover { background: rgba(23,39,59,0.9); }
+        .lead-item .info { display: flex; flex-direction: column; gap: 2px; }
+        .lead-item .info .name { font-weight: 600; font-size: 15px; }
+        .lead-item .info .meta { font-size: 12px; color: var(--muted); }
+        .lead-item .badge { font-size: 10px; font-weight: 700; padding: 4px 14px; border-radius: 20px; text-transform: uppercase; }
+        .lead-item .badge.urgent { background: var(--red); color: #fff; }
+        .lead-item .badge.media { background: rgba(236,201,75,0.2); color: var(--yellow); }
+        .lead-item .badge.baja { background: rgba(72,187,120,0.2); color: var(--green); }
+        .lead-item .contact-btn { background: linear-gradient(135deg, #25D366, #128C7E); border: none; color: #fff; padding: 8px 20px; border-radius: 24px; font-weight: 600; font-size: 14px; cursor: pointer; transition: transform 0.2s; }
+        .lead-item .contact-btn:hover { transform: scale(1.04); }
+
+        @media (max-width:980px) {
+            .device { grid-template-columns: 76px 1fr; }
+            .sidebar { padding-inline:6px; padding-top:12px; }
+            .brand-sub { font-size:9px; padding:1px 8px; }
+            .brand-title { font-size:16px; }
+            .nav-item { height:44px; padding:0 8px; gap:6px; justify-content:center; min-height:44px; }
+            .nav-item span:last-child { display:none; }
+            .ico { width:28px; font-size:20px; }
+            .dashboard { padding:10px; }
+            .topbar { height:auto; flex-direction:column; align-items:flex-start; gap:8px; padding-bottom:10px; }
+            .eyebrow { font-size:16px; }
+            .business-card { flex:0 0 220px; min-width:180px; padding:12px 14px; }
+            .business-card .card-company { font-size:15px; }
+            .business-card .card-volume { font-size:17px; }
+            .grid { grid-template-columns:1fr 1fr; gap:12px; }
+            .map-card { min-height:320px; }
+            .map-card #map { min-height:280px; }
+            .map-title { font-size:12px; padding:4px 12px; }
+            .center-btn { padding:6px 12px; font-size:11px; bottom:12px; right:12px; }
+            .legend { bottom:12px; left:12px; padding:8px 10px; font-size:10px; min-width:120px; }
+            .toolbar button, .ghost { width:34px; height:34px; font-size:17px; }
+            .kpi-item .kpi-number { font-size:22px; }
+            .volumen-principal .numero-grande { font-size:36px; }
+            .country-bar { flex-wrap:wrap; }
+            .country-bar .bar-bg { flex:1 1 100%; }
+        }
+        @media (max-width:720px) {
+            .device { grid-template-columns:1fr; }
+            .sidebar { border-right:0; border-bottom:1px solid rgba(255,255,255,.08); padding:8px 12px; flex-direction:row; flex-wrap:wrap; justify-content:space-between; }
+            .brand { flex-direction:row; gap:10px; margin-bottom:0; align-items:center; padding-top:0; }
+            .brand-sub { font-size:9px; padding:1px 8px; }
+            .brand-title { font-size:16px; margin-top:0; }
+            .nav { display:flex; flex-wrap:wrap; gap:4px; justify-content:center; width:100%; margin-top:6px; }
+            .nav-item { flex:0 0 auto; padding:0 10px; height:40px; min-height:40px; gap:4px; }
+            .nav-item span:last-child { display:inline; font-size:11px; }
+            .ico { width:24px; font-size:18px; }
+            .dashboard { padding:8px; }
+            .topbar { flex-direction:column; align-items:stretch; gap:6px; height:auto; }
+            .toolbar { justify-content:flex-end; }
+            .urgent-strip { padding:8px 0 8px 8px; }
+            .business-card { flex:0 0 200px; min-width:160px; padding:10px 12px; }
+            .business-card .card-company { font-size:14px; }
+            .business-card .card-volume { font-size:16px; }
+            .business-card .card-product { font-size:10px; max-width:80px; }
+            .grid { grid-template-columns:1fr; gap:10px; }
+            .map-card { min-height:280px; }
+            .map-card #map { min-height:240px; }
+            .map-title { font-size:11px; padding:4px 10px; top:8px; }
+            .center-btn { padding:4px 10px; font-size:10px; bottom:10px; right:10px; }
+            .legend { bottom:10px; left:10px; padding:6px 10px; font-size:9px; min-width:100px; }
+            .legend-dot { width:10px; height:10px; }
+            .card { min-height:auto; padding:14px; }
+            .lead-item { flex-direction:column; align-items:stretch; gap:8px; }
+            .lead-item .contact-btn { align-self:flex-start; }
+            .kpi-row { gap:8px; }
+            .kpi-item { padding:10px 4px; }
+            .kpi-item .kpi-number { font-size:20px; }
+            .volumen-principal .numero-grande { font-size:32px; }
+        }
+        @media (min-width:1200px) {
+            .grid { grid-template-columns:1.8fr 1.2fr 220px; }
+            .map-card { min-height:520px; }
+            .map-card #map { min-height:480px; }
+            .card { min-height:auto; }
+            .business-card { flex:0 0 300px; }
+        }
+        @media (min-width:1600px) {
+            .grid { gap:24px; }
+            .business-card { flex:0 0 340px; }
+        }
+        .leaflet-control-zoom { display: none !important; }
+        .leaflet-tile-pane { filter: brightness(0.95) saturate(0.9); }
+        .leaflet-container { background: #f0f4f8 !important; }
+        .leaflet-popup-content-wrapper { background: rgba(255,255,255,0.95) !important; backdrop-filter: blur(8px); border: 1px solid rgba(0,0,0,0.1); border-radius: 12px !important; color: #1a202c !important; box-shadow: 0 8px 32px rgba(0,0,0,0.2) !important; }
+        .leaflet-popup-tip { background: rgba(255,255,255,0.95) !important; }
+        .leaflet-popup-content { font-size: 13px; line-height: 1.6; min-width: 200px; }
+        .leaflet-popup-content strong { color: #1d4ed8; }
+        .popup-btn { display: inline-block; margin-top: 8px; background: #25D366; color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-decoration: none; border: none; cursor: pointer; }
+        .popup-btn:hover { background: #1da851; }
+    
+        /* ============================================================
+           MÓDULOS INTEGRADOS COMPACTOS · PALETA INDEX3
+           ============================================================ */
+        .lp-modules {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 16px;
+            width: 100%;
+            align-items: stretch;
+        }
+        .lp-card {
+            min-height: 180px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .lp-summary-card { grid-column: span 5; }
+        .lp-volume-card { grid-column: span 4; }
+        .lp-status-card { grid-column: span 3; }
+        .lp-demand-card { grid-column: span 7; min-height: 330px; }
+        .lp-platform-card { grid-column: span 5; min-height: 330px; }
+        .lp-chip {
+            position: relative; z-index: 1;
+            padding: 6px 12px;
+            border-radius: 999px;
+            color: #dbeafe;
+            background: rgba(59,130,246,.14);
+            border: 1px solid rgba(59,130,246,.35);
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .lp-kpi-grid {
+            position: relative; z-index: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            flex: 1;
+        }
+        .lp-kpi-cell {
+            min-width: 0;
+            border-radius: 14px;
+            padding: 12px 10px;
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.055);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .lp-kpi-icon {
+            width: 28px; height: 28px;
+            display: grid; place-items: center;
+            border-radius: 10px;
+            color: #93c5fd;
+            background: rgba(59,130,246,.13);
+            border: 1px solid rgba(59,130,246,.22);
+            margin-bottom: 7px;
+        }
+        .lp-kpi-cell strong {
+            color: #fff;
+            font-size: clamp(28px, 3.2vw, 42px);
+            line-height: .95;
+            letter-spacing: -.06em;
+        }
+        .lp-kpi-cell small {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+        }
+        .lp-kpi-cell em {
+            margin-top: 6px;
+            font-style: normal;
+            color: var(--green);
+            background: rgba(72,187,120,.16);
+            border: 1px solid rgba(72,187,120,.22);
+            padding: 2px 9px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .lp-volume-layout {
+            position: relative; z-index: 1;
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 14px;
+            align-items: center;
+            flex: 1;
+        }
+        .lp-gauge { position: relative; width: 150px; height: 150px; }
+        .lp-gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .lp-gauge-track { fill: none; stroke: rgba(255,255,255,.09); stroke-width: 13; }
+        .lp-gauge-value { fill: none; stroke: url(#lpBlueArc); stroke-width: 13; stroke-linecap: round; stroke-dasharray: 377; stroke-dashoffset: 88; filter: drop-shadow(0 0 8px rgba(59,130,246,.45)); }
+        .lp-gauge-core { fill: rgba(59,130,246,.055); stroke: rgba(255,255,255,.06); }
+        .lp-gauge-text { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+        .lp-gauge-text strong { display:block; font-size: 34px; letter-spacing: -.06em; line-height: .9; color:#fff; }
+        .lp-gauge-text span { display:block; margin-top: 5px; color: var(--muted); font-size: 12px; }
+        .lp-volume-metrics { display: grid; gap: 10px; }
+        .lp-volume-metrics div:not(.lp-mini-progress) {
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.055);
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+        .lp-volume-metrics strong { display:block; color:#fff; font-size: 24px; line-height: 1; }
+        .lp-volume-metrics span { display:block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+        .lp-mini-progress { height: 6px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+        .lp-mini-progress span { display:block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--blue), #93c5fd); box-shadow: 0 0 14px rgba(59,130,246,.35); }
+        .lp-demand-chart {
+            position: relative; z-index: 1;
+            flex: 1;
+            min-height: 120px;
+            border-radius: 14px;
+            background: rgba(255,255,255,.025);
+            border: 1px solid rgba(255,255,255,.055);
+            overflow: hidden;
+            padding: 6px;
+        }
+        .lp-demand-chart svg { width: 100%; height: 100%; display: block; }
+        .lp-grid-line { stroke: rgba(255,255,255,.065); stroke-width: 1; }
+        .lp-area { fill: url(#lpArea); }
+        .lp-line { fill: none; stroke: #60a5fa; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 8px rgba(59,130,246,.45)); }
+        .lp-points circle { fill:#fff; stroke:#3b82f6; stroke-width:3; filter: drop-shadow(0 0 6px rgba(59,130,246,.45)); }
+        .lp-country-strip {
+            position: relative; z-index: 1;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+        .lp-country-strip span {
+            min-width:0;
+            border-radius: 12px;
+            padding: 8px 9px;
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.055);
+            color: #dbeafe;
+            font-size: 11px;
+            line-height: 1.25;
+        }
+        .lp-country-strip b { color:#93c5fd; margin-right: 4px; }
+        .lp-country-strip strong { display:block; color:#fff; margin-top: 4px; font-size: 13px; }
+        .lp-platforms {
+            position: relative; z-index: 1;
+            display: grid;
+            gap: 10px;
+            flex: 1;
+            align-content: center;
+        }
+        .lp-platforms div {
+            display: grid;
+            grid-template-columns: minmax(120px, 1fr) 2fr 34px;
+            gap: 10px;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: rgba(255,255,255,.03);
+            border: 1px solid rgba(255,255,255,.045);
+        }
+        .lp-platforms span { color:#e9fbff; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lp-platforms i { display:block; height: 7px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+        .lp-platforms em { display:block; height:100%; border-radius: inherit; background: linear-gradient(90deg, var(--blue), #93c5fd); box-shadow: 0 0 12px rgba(59,130,246,.32); }
+        .lp-platforms strong { text-align:right; color:#fff; font-size: 14px; }
+        .lp-status-grid {
+            position: relative; z-index: 1;
+            display: grid;
+            gap: 10px;
+            flex: 1;
+        }
+        .lp-status-grid div {
+            border-radius: 14px;
+            padding: 12px;
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.055);
+        }
+        .lp-status-grid small { display:block; color:var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing:.03em; }
+        .lp-status-grid strong { display:block; margin-top: 6px; color:#fff; font-size: 18px; letter-spacing:-.03em; }
+        .lp-next-update span { display:block; margin-top: 4px; color:#93c5fd; font-size: 12px; }
+
+        /* ============================================================
+           AJUSTES FINOS · CENTRADO Y DENSIDAD INFORMATIVA
+           ============================================================ */
+        .lp-gauge-text {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transform: translateY(1px);
+            pointer-events: none;
+        }
+        .lp-gauge-text strong {
+            width: 100%;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -.045em !important;
+        }
+        .lp-gauge-text span {
+            width: 100%;
+            text-align: center;
+            margin-top: 0 !important;
+        }
+        .lp-kpi-cell {
+            min-height: 118px;
+        }
+        .lp-kpi-cell strong {
+            width: 100%;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -.035em !important;
+        }
+        .lp-kpi-cell small,
+        .lp-kpi-cell em {
+            text-align: center;
+        }
+        .lp-demand-chart {
+            min-height: 150px !important;
+            padding: 8px !important;
+        }
+        .lp-demand-chart text {
+            font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+            paint-order: stroke;
+            stroke: rgba(12, 28, 46, .85);
+            stroke-width: 2px;
+            stroke-linejoin: round;
+        }
+        .lp-axis-label {
+            fill: var(--muted);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .02em;
+        }
+        .lp-point-label {
+            fill: #e9fbff;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .lp-point-value {
+            fill: #93c5fd;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .lp-country-strip span {
+            min-height: 70px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .lp-country-strip small {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 10px;
+            line-height: 1.2;
+        }
+        .lp-demand-insight {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .lp-demand-insight div {
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.055);
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.25;
+        }
+        .lp-demand-insight strong {
+            display: block;
+            color: #fff;
+            font-size: 15px;
+            margin-bottom: 2px;
+            letter-spacing: -.03em;
+        }
+        @media (max-width: 860px) {
+            .lp-demand-insight { grid-template-columns: 1fr; }
+            .lp-kpi-cell { min-height: auto; }
+        }
+
+        @media (max-width: 1240px) {
+            .lp-summary-card, .lp-volume-card { grid-column: span 6; }
+            .lp-status-card { grid-column: span 12; }
+            .lp-demand-card, .lp-platform-card { grid-column: span 6; }
+            .lp-volume-layout { grid-template-columns: 130px 1fr; }
+            .lp-gauge { width:130px; height:130px; }
+        }
+        @media (max-width: 860px) {
+            .lp-modules { grid-template-columns: 1fr; }
+            .lp-summary-card, .lp-volume-card, .lp-status-card, .lp-demand-card, .lp-platform-card { grid-column: auto; }
+            .lp-country-strip { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 540px) {
+            .lp-kpi-grid { grid-template-columns: 1fr; }
+            .lp-volume-layout { grid-template-columns: 1fr; justify-items: center; }
+            .lp-platforms div { grid-template-columns: 1fr; }
+            .lp-country-strip { grid-template-columns: 1fr; }
+        }
+
+
+        /* ============================================================
+           AJUSTE SOLICITADO · TEXTOS CENTRADOS Y TIPOGRAFÍA MAYOR
+           ============================================================ */
+        .lp-card {
+            justify-content: center;
+        }
+        .lp-card .card-head.compact {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 10px;
+            margin-bottom: 2px;
+        }
+        .lp-card .card-head.compact > div {
+            width: 100%;
+            text-align: center;
+        }
+        .lp-card .label {
+            width: 100%;
+            text-align: center;
+            font-size: 17px;
+            line-height: 1.15;
+        }
+        .lp-card .muted {
+            width: 100%;
+            text-align: center;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+        .lp-chip,
+        .lp-card .ghost {
+            align-self: center;
+        }
+        .lp-chip {
+            font-size: 13px;
+            padding: 7px 14px;
+        }
+
+        .lp-kpi-grid {
+            align-items: stretch;
+        }
+        .lp-kpi-cell {
+            padding: 14px 12px;
+            text-align: center;
+        }
+        .lp-kpi-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .lp-kpi-cell strong {
+            font-size: clamp(34px, 3.6vw, 48px) !important;
+        }
+        .lp-kpi-cell small {
+            font-size: 13px;
+            line-height: 1.25;
+        }
+        .lp-kpi-cell em {
+            font-size: 12px;
+            padding: 3px 10px;
+        }
+
+        .lp-volume-layout {
+            align-items: center;
+        }
+        .lp-gauge {
+            margin-inline: auto;
+        }
+        .lp-gauge-text strong {
+            font-size: 40px !important;
+        }
+        .lp-gauge-text span {
+            font-size: 15px !important;
+        }
+        .lp-volume-metrics {
+            text-align: center;
+        }
+        .lp-volume-metrics div:not(.lp-mini-progress) {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 68px;
+        }
+        .lp-volume-metrics strong {
+            font-size: 28px;
+            text-align: center;
+        }
+        .lp-volume-metrics span {
+            font-size: 13px;
+            line-height: 1.25;
+            text-align: center;
+        }
+
+        .lp-demand-chart {
+            padding: 10px !important;
+        }
+        .lp-demand-insight div {
+            text-align: center;
+            font-size: 12px;
+        }
+        .lp-demand-insight strong {
+            font-size: 17px;
+        }
+        .lp-country-strip span {
+            text-align: center;
+            font-size: 12px;
+            padding: 10px 10px;
+        }
+        .lp-country-strip strong {
+            font-size: 15px;
+            text-align: center;
+        }
+        .lp-country-strip small {
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .lp-platforms {
+            align-content: start;
+        }
+        .lp-platforms div {
+            text-align: center;
+        }
+        .lp-platforms span {
+            font-size: 14px;
+            text-align: center;
+            white-space: normal;
+        }
+        .lp-platforms strong {
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .lp-status-grid div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 84px;
+        }
+        .lp-status-grid small {
+            font-size: 12px;
+            line-height: 1.2;
+            text-align: center;
+        }
+        .lp-status-grid strong {
+            font-size: 21px;
+            text-align: center;
+        }
+        .lp-next-update span {
+            font-size: 13px;
+            line-height: 1.3;
+            text-align: center;
+        }
+
+        .lp-axis-label {
+            font-size: 11px !important;
+        }
+        .lp-point-label {
+            font-size: 12px !important;
+        }
+        .lp-point-value {
+            font-size: 11px !important;
+        }
+
+        @media (max-width: 540px) {
+            .lp-card .label { font-size: 16px; }
+            .lp-card .muted { font-size: 12px; }
+            .lp-kpi-cell strong { font-size: 34px !important; }
+            .lp-gauge-text strong { font-size: 36px !important; }
+            .lp-volume-metrics strong { font-size: 24px; }
+        }
+
+
+        /* ============================================================
+           CONTEXTO / CONTEXTO GLOBAL · MAYOR PRESENCIA TIPOGRÁFICA
+           ============================================================ */
+        .lp-modules {
+            gap: 18px;
+        }
+        .lp-card {
+            padding: 20px;
+            gap: 14px;
+        }
+        .lp-card .card-head.compact {
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+        .lp-card .label {
+            font-size: 20px !important;
+            font-weight: 800;
+            line-height: 1.12;
+            text-align: center !important;
+            letter-spacing: -.02em;
+            color: #ffffff;
+        }
+        .lp-card .muted {
+            font-size: 14px !important;
+            line-height: 1.4;
+            text-align: center !important;
+            color: #c5d4e7;
+            max-width: 92%;
+            margin: 0 auto;
+        }
+        .lp-chip,
+        .lp-card .ghost {
+            font-size: 13px !important;
+        }
+
+        .lp-kpi-cell {
+            padding: 16px 14px;
+            min-height: 132px;
+        }
+        .lp-kpi-icon {
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+        .lp-kpi-cell strong {
+            font-size: clamp(38px, 4vw, 54px) !important;
+            line-height: .92;
+        }
+        .lp-kpi-cell small {
+            font-size: 14px !important;
+            font-weight: 600;
+            line-height: 1.28;
+            letter-spacing: .01em;
+        }
+        .lp-kpi-cell em {
+            font-size: 13px !important;
+            font-weight: 800;
+        }
+
+        .lp-gauge {
+            width: 165px;
+            height: 165px;
+        }
+        .lp-gauge-text strong {
+            font-size: 44px !important;
+            line-height: .9;
+        }
+        .lp-gauge-text span {
+            font-size: 16px !important;
+            font-weight: 600;
+        }
+        .lp-volume-metrics {
+            gap: 12px;
+        }
+        .lp-volume-metrics div:not(.lp-mini-progress) {
+            min-height: 76px;
+            padding: 12px 14px;
+        }
+        .lp-volume-metrics strong {
+            font-size: 30px !important;
+            line-height: .95;
+        }
+        .lp-volume-metrics span {
+            font-size: 14px !important;
+            line-height: 1.3;
+            max-width: 90%;
+            margin-inline: auto;
+        }
+
+        .lp-demand-card {
+            min-height: 350px;
+        }
+        .lp-demand-chart {
+            min-height: 170px !important;
+            padding: 12px !important;
+        }
+        .lp-axis-label {
+            font-size: 12px !important;
+            font-weight: 700;
+        }
+        .lp-point-label {
+            font-size: 13px !important;
+            font-weight: 800;
+        }
+        .lp-point-value {
+            font-size: 12px !important;
+            font-weight: 700;
+        }
+        .lp-demand-insight div {
+            text-align: center;
+            font-size: 13px !important;
+            line-height: 1.3;
+            padding: 10px 12px;
+        }
+        .lp-demand-insight strong {
+            font-size: 18px !important;
+            line-height: 1;
+        }
+        .lp-country-strip span {
+            text-align: center;
+            font-size: 13px !important;
+            line-height: 1.3;
+            padding: 12px 10px;
+        }
+        .lp-country-strip strong {
+            font-size: 16px !important;
+        }
+        .lp-country-strip small {
+            font-size: 12px !important;
+            line-height: 1.25;
+        }
+
+        .lp-platform-card {
+            min-height: 350px;
+        }
+        .lp-platforms {
+            gap: 12px;
+        }
+        .lp-platforms div {
+            padding: 10px 12px;
+        }
+        .lp-platforms span {
+            font-size: 15px !important;
+            font-weight: 600;
+            text-align: center !important;
+        }
+        .lp-platforms strong {
+            font-size: 17px !important;
+            font-weight: 800;
+            text-align: center !important;
+        }
+
+        .lp-status-grid {
+            gap: 12px;
+        }
+        .lp-status-grid div {
+            min-height: 92px;
+            padding: 14px;
+        }
+        .lp-status-grid small {
+            font-size: 13px !important;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+        .lp-status-grid strong {
+            font-size: 24px !important;
+            line-height: 1;
+        }
+        .lp-next-update span {
+            font-size: 14px !important;
+            font-weight: 600;
+            line-height: 1.35;
+            max-width: 92%;
+            margin-inline: auto;
+        }
+
+        @media (max-width: 860px) {
+            .lp-card .label {
+                font-size: 18px !important;
+            }
+            .lp-card .muted {
+                font-size: 13px !important;
+            }
+            .lp-kpi-cell strong {
+                font-size: 36px !important;
+            }
+            .lp-gauge {
+                width: 150px;
+                height: 150px;
+            }
+            .lp-gauge-text strong {
+                font-size: 40px !important;
+            }
+            .lp-volume-metrics strong {
+                font-size: 26px !important;
+            }
+            .lp-status-grid strong {
+                font-size: 21px !important;
+            }
+        }
+
+        /* No hay elementos de carga/exportación visibles */
+</style>
+</head>
+<body>
+<main class="scene">
+    <section class="device">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <span class="brand-sub">⏣ La Plataforma</span>
+                <span class="brand-title">UNAGRO S.A.</span>
+            </div>
+            <nav class="nav">
+                <a class="nav-item active" data-view="mapa" href="#mapa"><span class="ico">⬡</span><span>Mapa</span></a>
+                <a class="nav-item" data-view="leads" href="#leads"><span class="ico">◈</span><span>Oportunidades</span></a>
+                <a class="nav-item" data-view="ranking" href="#ranking"><span class="ico">▦</span><span>Ranking</span></a>
+                <a class="nav-item" data-view="contexto" href="#contexto"><span class="ico">⊞</span><span>Contexto</span></a>
+            </nav>
+        </aside>
+
+        <!-- Dashboard -->
+        <div class="dashboard">
+            <!-- Topbar -->
+            <header class="topbar">
+                <div><p class="eyebrow">Centro de Control</p><h1 id="sectionTitle" style="display:none;">Mapa</h1></div>
+                <div class="toolbar">
+                    <span class="status-dot"></span>
+                    <button aria-label="Buscar">⌕</button>
+                    <button aria-label="Notificaciones">◌</button>
+                    <div class="user-badge">Administrador</div>
+                </div>
+            </header>
+
+            <!-- Carrusel -->
+            <div class="urgent-strip">
+                <div class="strip-header">
+                    <span class="label"><span class="pulse-dot"></span> Oportunidades</span>
+                    <span style="font-size:11px;color:var(--muted);">Desliza o arrastra para ver más</span>
+                </div>
+                <div class="card-scroll" id="urgentScroll"></div>
+            </div>
+
+            <!-- Vista Mapa -->
+            <div id="view-mapa" class="view active">
+                <div class="grid">
+                    <!-- MAPA -->
+                    <div class="card map-card">
+                        <div class="map-title">🌍 Mapa de oportunidades</div>
+                        <div id="map"></div>
+                        <div class="legend">
+                            <div style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#4a5568;margin-bottom:4px;">INFLUENCIA DE EXPORTADORES</div>
+                            <div class="legend-item"><span class="legend-dot brazil"></span><span><strong>Brasil</strong> (origen)</span></div>
+                            <div class="legend-item"><span class="legend-dot india"></span><span><strong>India</strong> (origen)</span></div>
+                            <div class="legend-item"><span class="legend-dot thailand"></span><span><strong>Tailandia</strong> (origen)</span></div>
+                            <div class="legend-item"><span class="legend-dot low"></span><span><strong>Baja influencia</strong></span></div>
+                            <div class="legend-divider"></div>
+                            <div class="legend-priority-title">PRIORIDAD DEL LEAD</div>
+                            <div class="legend-item"><span class="legend-dot urgent"></span><span><strong>Urgente</strong></span></div>
+                            <div class="legend-item"><span class="legend-dot media"></span><span><strong>Atención rápida</strong></span></div>
+                            <div class="legend-item"><span class="legend-dot baja"></span><span><strong>Potencial</strong></span></div>
+                        </div>
+                        <button class="center-btn" id="centerMapBtn">📍 Volver al centro</button>
+                    </div>
+
+                    <!-- ==========================================================
+                         MÓDULOS INTEGRADOS COMPACTOS
+                         ========================================================== -->
+                    <section class="lp-modules" aria-label="Indicadores integrados de La Plataforma">
+                        <!-- 1. Resumen de oportunidades -->
+                        <article class="card lp-card lp-summary-card">
+                            <div class="card-head compact">
+                                <div>
+                                    <p class="label">Resumen de oportunidades</p>
+                                    <p class="muted" id="summaryDate">Cargando datos...</p>
+                                </div>
+                                <span class="lp-chip">v6</span>
+                            </div>
+
+                            <div class="lp-kpi-grid">
+                                <div class="lp-kpi-cell">
+                                    <span class="lp-kpi-icon">◈</span>
+                                    <strong id="totalLeads">0</strong>
+                                    <small>leads totales</small>
+                                </div>
+                                <div class="lp-kpi-cell">
+                                    <span class="lp-kpi-icon">◎</span>
+                                    <strong id="totalCountries">0</strong>
+                                    <small>países</small>
+                                </div>
+                                <div class="lp-kpi-cell">
+                                    <span class="lp-kpi-icon">⌁</span>
+                                    <strong id="totalDirectos">0</strong>
+                                    <small>contactos directos</small>
+                                    <em id="directChange">0%</em>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- 2. Volumen total demandado -->
+                        <article class="card lp-card lp-volume-card">
+                            <div class="card-head compact">
+                                <div>
+                                    <p class="label">Volumen total demandado</p>
+                                    <p class="muted">Volumen mensual consolidado</p>
+                                </div>
+                                <button class="ghost">•••</button>
+                            </div>
+
+                            <div class="lp-volume-layout">
+                                <div class="lp-gauge" aria-hidden="true">
+                                    <svg viewBox="0 0 160 160">
+                                        <defs>
+                                            <linearGradient id="lpBlueArc" x1="0" x2="1" y1="0" y2="1">
+                                                <stop offset="0%" stop-color="#93c5fd"/>
+                                                <stop offset="100%" stop-color="#1d4ed8"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <circle cx="80" cy="80" r="60" class="lp-gauge-track"/>
+                                        <circle cx="80" cy="80" r="60" class="lp-gauge-value"/>
+                                        <circle cx="80" cy="80" r="42" class="lp-gauge-core"/>
+                                    </svg>
+                                    <div class="lp-gauge-text">
+                                        <strong id="totalVolumen">0</strong>
+                                        <span>TM/mes</span>
+                                    </div>
+                                </div>
+
+                                <div class="lp-volume-metrics">
+                                    <div><strong id="leadsConVolumen">0</strong><span>leads con volumen definido</span></div>
+                                    <div><strong id="totalMercados">0</strong><span>mercados activos</span></div>
+                                    <div class="lp-mini-progress"><span id="volBar" style="width:0%"></span></div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- 3. Top 5 países por demanda -->
+                        <article class="card lp-card lp-demand-card">
+                            <div class="card-head compact">
+                                <div>
+                                    <p class="label">Top 5 países por demanda</p>
+                                    <p class="muted">Curva comparativa de intensidad</p>
+                                </div>
+                                <button class="ghost" id="refreshBtn">↻</button>
+                            </div>
+
+                            <div class="lp-demand-chart" id="demandChartContainer">
+                                <svg viewBox="0 0 520 230" preserveAspectRatio="xMidYMid meet" aria-label="Curva de demanda por país">
+                                    <defs>
+                                        <linearGradient id="lpArea" x1="0" x2="0" y1="0" y2="1">
+                                            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.35"/>
+                                            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+                                        </linearGradient>
+                                    </defs>
+
+                                    <!-- Grid + eje de referencia -->
+                                    <line x1="54" y1="182" x2="500" y2="182" class="lp-grid-line"/>
+                                    <line x1="54" y1="142" x2="500" y2="142" class="lp-grid-line"/>
+                                    <line x1="54" y1="102" x2="500" y2="102" class="lp-grid-line"/>
+                                    <line x1="54" y1="62" x2="500" y2="62" class="lp-grid-line"/>
+                                    <text x="12" y="185" class="lp-axis-label">0k</text>
+                                    <text x="8" y="145" class="lp-axis-label">200k</text>
+                                    <text x="8" y="105" class="lp-axis-label">400k</text>
+                                    <text x="8" y="65" class="lp-axis-label">600k</text>
+
+                                    <!-- Área y curva (se actualizarán dinámicamente) -->
+                                    <path id="demandArea" d="M78 38 L178 137 L278 150 L378 160 L478 161 L478 182 L78 182 Z" class="lp-area"/>
+                                    <path id="demandLine" d="M78 38 L178 137 L278 150 L378 160 L478 161" class="lp-line"/>
+
+                                    <!-- Puntos -->
+                                    <g class="lp-points" id="demandPoints">
+                                        <circle cx="78" cy="38" r="5"/>
+                                        <circle cx="178" cy="137" r="5"/>
+                                        <circle cx="278" cy="150" r="5"/>
+                                        <circle cx="378" cy="160" r="5"/>
+                                        <circle cx="478" cy="161" r="5"/>
+                                    </g>
+
+                                    <!-- Etiquetas de punto (se actualizarán) -->
+                                    <g id="demandLabels">
+                                        <text x="58" y="22" class="lp-point-label">HK</text>
+                                        <text x="49" y="34" class="lp-point-value">630.0k</text>
+                                        <text x="160" y="120" class="lp-point-label">CN</text>
+                                        <text x="147" y="132" class="lp-point-value">175.0k</text>
+                                        <text x="260" y="132" class="lp-point-label">MA</text>
+                                        <text x="247" y="144" class="lp-point-value">117.0k</text>
+                                        <text x="362" y="143" class="lp-point-label">IN</text>
+                                        <text x="352" y="155" class="lp-point-value">86.0k</text>
+                                        <text x="462" y="144" class="lp-point-label">SN</text>
+                                        <text x="451" y="156" class="lp-point-value">82.1k</text>
+                                    </g>
+
+                                    <!-- Etiquetas eje X -->
+                                    <text x="68" y="206" class="lp-axis-label">Hong Kong</text>
+                                    <text x="165" y="206" class="lp-axis-label">China</text>
+                                    <text x="251" y="206" class="lp-axis-label">Marruecos</text>
+                                    <text x="370" y="206" class="lp-axis-label">India</text>
+                                    <text x="454" y="206" class="lp-axis-label">Senegal</text>
+                                </svg>
+                            </div>
+
+                            <div class="lp-demand-insight">
+                                <div><strong id="insightTop5Vol">0</strong>volumen acumulado top 5</div>
+                                <div><strong id="insightTop1Pct">0%</strong>concentrado en el país líder</div>
+                                <div><strong id="insightTop1Gap">0</strong>brecha líder vs segundo</div>
+                            </div>
+
+                            <div class="lp-country-strip" id="topCountriesList">
+                                <span>Sin datos</span>
+                            </div>
+                        </article>
+
+                        <!-- 4. Principales plataformas -->
+                        <article class="card lp-card lp-platform-card">
+                            <div class="card-head compact">
+                                <div>
+                                    <p class="label">Principales plataformas</p>
+                                    <p class="muted">Distribución de fuentes detectadas</p>
+                                </div>
+                                <span class="lp-chip">Top 5</span>
+                            </div>
+                            <div class="lp-platforms" id="platformList">
+                                <div><span>Sin datos</span></div>
+                            </div>
+                        </article>
+
+                        <!-- 5. Datos activos -->
+                        <article class="card lp-card lp-status-card">
+                            <div class="card-head compact">
+                                <div>
+                                    <p class="label">Datos activos</p>
+                                    <p class="muted">Estado del barrido y curaduría</p>
+                                </div>
+                                <span class="status-badge"><span class="dot"></span> Activo</span>
+                            </div>
+
+                            <div class="lp-status-grid">
+                                <div>
+                                    <small>Actualizado</small>
+                                    <strong id="statusVersion">v6 - sin datos</strong>
+                                </div>
+                                <div>
+                                    <small>Países escaneados</small>
+                                    <strong id="statusCountries">0</strong>
+                                </div>
+                                <div class="lp-next-update">
+                                    <small>Próxima actualización</small>
+                                    <strong>A definir por el Curador</strong>
+                                    <span>La Plataforma</span>
+                                </div>
+                            </div>
+                        </article>
+                    </section>
+
+                </div>
+            </div>
+
+            <!-- Vista Leads -->
+            <div id="view-leads" class="view">
+                <h2 style="font-size:20px;font-weight:600;margin-bottom:12px;">📋 Todas las oportunidades</h2>
+                <div class="leads-list" id="leadsContainer">
+                    <p style="color:var(--muted);text-align:center;padding:20px;">Cargando datos...</p>
+                </div>
+            </div>
+
+            <!-- Vista Ranking -->
+            <div id="view-ranking" class="view">
+                <h2 style="font-size:20px;font-weight:600;margin-bottom:12px;">📊 Ranking de oportunidades</h2>
+                <div class="leads-list" id="rankingContainer">
+                    <p style="color:var(--muted);text-align:center;padding:20px;">Cargando datos...</p>
+                </div>
+            </div>
+
+            <!-- Vista Contexto -->
+            <div id="view-contexto" class="view">
+                <h2 style="font-size:20px;font-weight:600;margin-bottom:12px;">📰 Contexto global</h2>
+                <div class="grid" style="grid-template-columns:repeat(auto-fill, minmax(240px,1fr));">
+                    <div class="card"><p class="label">🌎 Producción mundial 2025/26</p><h2 style="font-size:28px;">189.3M TM</h2><p class="muted">USDA</p></div>
+                    <div class="card"><p class="label">📈 Consumo mundial</p><h2 style="font-size:28px;">178.1M TM</h2><p class="muted">proyección 2025/26</p></div>
+                    <div class="card"><p class="label">🇧🇷 Exportador dominante</p><h2 style="font-size:28px;">54%</h2><p class="muted">Brasil</p></div>
+                    <div class="card"><p class="label">🔥 Mercados con déficit</p><h2 style="font-size:28px;">15</h2><p class="muted">países con alta oportunidad</p></div>
+                    <div class="card" style="border-left:3px solid var(--red);"><p class="label">🚨 Oportunidades urgentes</p><h2 style="font-size:28px;color:var(--red);">4</h2><p class="muted">de 10 visibles</p></div>
+                    <div class="card"><p class="label">📦 Volumen potencial</p><h2 style="font-size:28px;">1.25M</h2><p class="muted">TM/mes disponibles</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// =====================================================================
+//  DATOS DE RESPALDO (136 leads)
+//  Se usan si no se puede cargar el CSV
+// =====================================================================
+const fallbackData = [
+    { id:'M001', empresa:'Yalemzewd Bayabel Chekol', pais:'Etiopia', ciudad:'', lat:9.032, lng:38.7469, volumen:10000, producto:'ICUMSA 45 Sugar', plataforma:'GlobalBuyersOnline', urgencia:'urgente', contacto:'Contacto via plataforma + nombre', c3:5, telefono:'+251900000000' },
+    { id:'M002', empresa:'Kyra Trade Philippines', pais:'Filipinas', ciudad:'', lat:12.8797, lng:121.774, volumen:50000, producto:'Sugar ICUMSA 45', plataforma:'GlobalBuyersOnline', urgencia:'urgente', contacto:'Contacto via plataforma + nombre', c3:5, telefono:'+639000000000' },
+    { id:'M003', empresa:'Gulf Trading Company', pais:'Oman', ciudad:'', lat:21.4735, lng:55.9754, volumen:12500, producto:'White Refined Cane Sugar Grade A ICUMSA 45', plataforma:'GlobalBuyersOnline', urgencia:'urgente', contacto:'Contacto via plataforma + Mr. Ahmed', c3:5, telefono:'+96890000000' },
+    { id:'M004', empresa:'Contacto Para La Compra De Azúcar Refinada', pais:'Nigeria', ciudad:'', lat:9.082, lng:8.6753, volumen:0, producto:'ICUMSA 45', plataforma:'GlobalBuyersOnline', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+234900000000' },
+    { id:'M005', empresa:'Pan Teng', pais:'China', ciudad:'Guangzhou', lat:23.1291, lng:113.2644, volumen:100000, producto:'Raw Sugar / ICUMSA 45', plataforma:'Go4WorldBusiness', urgencia:'urgente', contacto:'Contacto via plataforma + nombre', c3:5, telefono:'+8613900000000' },
+    { id:'M006', empresa:'Kowloon Buyer', pais:'Hong Kong', ciudad:'Kowloon', lat:22.3193, lng:114.1694, volumen:500000, producto:'ICUMSA 45 + Glucose Mix', plataforma:'Go4WorldBusiness', urgencia:'urgente', contacto:'Contacto via plataforma', c3:3, telefono:'+85290000000' },
+    { id:'M007', empresa:'West Africa Buyer', pais:'Marruecos', ciudad:'Casablanca', lat:33.5731, lng:-7.5898, volumen:100000, producto:'ICUMSA 45', plataforma:'ExportHub', urgencia:'urgente', contacto:'Contacto via plataforma', c3:3, telefono:'+212600000000' },
+    { id:'M008', empresa:'Buyer For ICUMSA 45', pais:'India', ciudad:'', lat:20.5937, lng:78.9629, volumen:20000, producto:'ICUMSA 45 Refined', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:5, telefono:'+919000000000' },
+    { id:'M009', empresa:'Buyer For White Refined Sugar', pais:'Pakistan', ciudad:'', lat:30.3753, lng:69.3451, volumen:10000, producto:'White Refined Sugar', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:5, telefono:'+923000000000' },
+    { id:'M010', empresa:'Buyer For ICUMSA 45', pais:'Sri Lanka', ciudad:'', lat:7.8731, lng:80.7718, volumen:15000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+94700000000' },
+    { id:'M011', empresa:'Buyer For Raw Sugar', pais:'Hong Kong', ciudad:'', lat:22.3193, lng:114.1694, volumen:100000, producto:'Raw Sugar', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+85290000001' },
+    { id:'M012', empresa:'Buyer For ICUMSA 45', pais:'China', ciudad:'', lat:35.8617, lng:104.1954, volumen:50000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+8613900000001' },
+    { id:'M013', empresa:'Buyer For ICUMSA 45', pais:'UAE', ciudad:'', lat:23.4241, lng:53.8478, volumen:25000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+971500000000' },
+    { id:'M014', empresa:'Buyer For ICUMSA 45', pais:'Kuwait', ciudad:'', lat:29.3759, lng:47.9774, volumen:20000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+96590000000' },
+    { id:'M015', empresa:'Buyer For ICUMSA 45', pais:'Australia', ciudad:'', lat:-25.2744, lng:133.7751, volumen:15000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+61400000000' },
+    { id:'M016', empresa:'Buyer For ICUMSA 45', pais:'India', ciudad:'', lat:20.5937, lng:78.9629, volumen:10000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+919000000001' },
+    { id:'M017', empresa:'Buyer For ICUMSA 45', pais:'UAE', ciudad:'', lat:23.4241, lng:53.8478, volumen:20000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+971500000001' },
+    { id:'M018', empresa:'Buyer For ICUMSA 45', pais:'Hong Kong', ciudad:'', lat:22.3193, lng:114.1694, volumen:30000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+85290000002' },
+    { id:'M019', empresa:'Buyer For ICUMSA 45', pais:'India', ciudad:'', lat:20.5937, lng:78.9629, volumen:15000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+919000000002' },
+    { id:'M020', empresa:'Buyer For ICUMSA 45', pais:'India', ciudad:'', lat:20.5937, lng:78.9629, volumen:10000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+919000000003' },
+    { id:'M021', empresa:'Buyer For ICUMSA 45', pais:'Ghana', ciudad:'', lat:7.9465, lng:-1.0232, volumen:25000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+23390000000' },
+    { id:'M022', empresa:'Buyer For ICUMSA 45', pais:'Togo', ciudad:'', lat:8.6195, lng:0.8248, volumen:20000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+22890000000' },
+    { id:'M023', empresa:'Buyer For ICUMSA 45', pais:'Nigeria', ciudad:'', lat:9.082, lng:8.6753, volumen:30000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+234900000001' },
+    { id:'M024', empresa:'Buyer For ICUMSA 45', pais:'Pakistan', ciudad:'', lat:30.3753, lng:69.3451, volumen:20000, producto:'ICUMSA 45', plataforma:'EC21', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+923000000001' },
+    { id:'M025', empresa:'LEAD-001', pais:'UAE', ciudad:'Dubai', lat:25.2048, lng:55.2708, volumen:0, producto:'Azúcar refinada blanca ICUMSA 45', plataforma:'TradeKey', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+971500000002' },
+    { id:'M026', empresa:'LEAD-002', pais:'India', ciudad:'Mumbai', lat:19.076, lng:72.8777, volumen:0, producto:'Azúcar cruda (VHP)', plataforma:'TradeKey', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+919000000004' },
+    { id:'M027', empresa:'LEAD-003', pais:'China', ciudad:'Shanghai', lat:31.2304, lng:121.4737, volumen:0, producto:'Azúcar refinada blanca ICUMSA 45', plataforma:'TradeKey', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+8613900000002' },
+    { id:'M028', empresa:'LEAD-004', pais:'Nigeria', ciudad:'Lagos', lat:6.5244, lng:3.3792, volumen:0, producto:'Azúcar sin especificar', plataforma:'Panjiva', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M029', empresa:'LEAD-005', pais:'Ghana', ciudad:'Accra', lat:5.6037, lng:-0.187, volumen:0, producto:'Azúcar sin especificar', plataforma:'Panjiva', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M030', empresa:'LEAD-006', pais:'USA', ciudad:'New York', lat:40.7128, lng:-74.006, volumen:0, producto:'Azúcar sin especificar', plataforma:'Panjiva', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M031', empresa:'LEAD-007', pais:'UAE', ciudad:'Dubai', lat:25.2048, lng:55.2708, volumen:12500, producto:'Azúcar refinada blanca ICUMSA 45', plataforma:'ExportHub', urgencia:'media', contacto:'Contacto via plataforma', c3:0, telefono:'+971500000003' },
+    { id:'M032', empresa:'LEAD-008', pais:'Canada', ciudad:'Toronto', lat:43.6532, lng:-79.3832, volumen:40, producto:'Azúcar sin especificar', plataforma:'ExportHub', urgencia:'media', contacto:'Contacto via plataforma', c3:0, telefono:'+14160000000' },
+    { id:'M033', empresa:'LEAD-009', pais:'Turkey', ciudad:'Istanbul', lat:41.0082, lng:28.9784, volumen:0, producto:'Azúcar sin especificar', plataforma:'ExportHub', urgencia:'media', contacto:'Contacto via plataforma', c3:0, telefono:'+905000000000' },
+    { id:'M034', empresa:'LEAD-010', pais:'China', ciudad:'Shanghai', lat:31.2304, lng:121.4737, volumen:0, producto:'Azúcar sin especificar', plataforma:'ExportHub', urgencia:'media', contacto:'Contacto via plataforma', c3:0, telefono:'+8613900000003' },
+    { id:'M035', empresa:'LEAD-011', pais:'China', ciudad:'Shenzhen', lat:22.5431, lng:114.0579, volumen:0, producto:'Azúcar sin especificar', plataforma:'ExportHub', urgencia:'media', contacto:'Contacto via plataforma', c3:0, telefono:'+8613900000004' },
+    { id:'M036', empresa:'LEAD-012', pais:'India', ciudad:'Mumbai', lat:19.076, lng:72.8777, volumen:0, producto:'Azúcar sin especificar', plataforma:'ExportHub', urgencia:'media', contacto:'Contacto via plataforma', c3:0, telefono:'+919000000005' },
+    { id:'M037', empresa:'LEAD-013', pais:'UAE', ciudad:'Dubai', lat:25.2048, lng:55.2708, volumen:0, producto:'Azúcar sin especificar', plataforma:'ExportHub', urgencia:'media', contacto:'Contacto via plataforma', c3:0, telefono:'+971500000004' },
+    { id:'M038', empresa:'LEAD-014', pais:'USA', ciudad:'Los Angeles', lat:34.0522, lng:-118.2437, volumen:0, producto:'Azúcar sin especificar', plataforma:'ExportHub', urgencia:'media', contacto:'Contacto via plataforma', c3:0, telefono:'+12130000000' },
+    { id:'M039', empresa:'LEAD-015', pais:'Bangladesh', ciudad:'Dhaka', lat:23.8103, lng:90.4125, volumen:0, producto:'Azúcar sin especificar', plataforma:'ExportHub', urgencia:'media', contacto:'Contacto via plataforma', c3:0, telefono:'+8801700000000' },
+    { id:'M040', empresa:'LEAD-016', pais:'India', ciudad:'Delhi', lat:28.7041, lng:77.1025, volumen:0, producto:'Azúcar sin especificar', plataforma:'ExportHub', urgencia:'media', contacto:'Contacto via plataforma', c3:0, telefono:'+919000000006' },
+    { id:'M041', empresa:'LEAD-017', pais:'India', ciudad:'Kolkata', lat:22.5726, lng:88.3639, volumen:0, producto:'Azúcar sin especificar', plataforma:'ExportHub', urgencia:'media', contacto:'Contacto via plataforma', c3:0, telefono:'+919000000007' },
+    { id:'M042', empresa:'LEAD-018', pais:'Turkey', ciudad:'Istanbul', lat:41.0082, lng:28.9784, volumen:0, producto:'Azúcar sin especificar', plataforma:'ExportHub', urgencia:'media', contacto:'Contacto via plataforma', c3:0, telefono:'+905000000001' },
+    { id:'M043', empresa:'LEAD-019', pais:'Canada', ciudad:'Montreal', lat:45.5017, lng:-73.5673, volumen:130, producto:'Azúcar Colombia', plataforma:'Panjiva', urgencia:'media', contacto:'No detectado', c3:5, telefono:'' },
+    { id:'M044', empresa:'LEAD-020', pais:'Canada', ciudad:'Toronto', lat:43.6532, lng:-79.3832, volumen:100, producto:'Azúcar blanco', plataforma:'Panjiva', urgencia:'media', contacto:'No detectado', c3:5, telefono:'' },
+    { id:'M045', empresa:'LEAD-021', pais:'USA', ciudad:'New Jersey', lat:40.0583, lng:-74.4057, volumen:80, producto:'Azúcar moreno', plataforma:'Panjiva', urgencia:'media', contacto:'No detectado', c3:5, telefono:'' },
+    { id:'M046', empresa:'LEAD-022', pais:'Mali', ciudad:'Bamako', lat:12.6392, lng:-8.0029, volumen:0, producto:'Azúcar sin especificar', plataforma:'ExportGenius', urgencia:'media', contacto:'No detectado', c3:5, telefono:'' },
+    { id:'M047', empresa:'LEAD-023', pais:'Togo', ciudad:'Lome', lat:6.1256, lng:1.2254, volumen:0, producto:'Azúcar sin especificar', plataforma:'ExportGenius', urgencia:'media', contacto:'No detectado', c3:5, telefono:'' },
+    { id:'M048', empresa:'Comprador de Azúcar Refinada', pais:'Colombia', ciudad:'', lat:4.5709, lng:-74.2973, volumen:0, producto:'Azúcar refinada', plataforma:'Go4WorldBusiness', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+573000000000' },
+    { id:'M049', empresa:'Comprador de Azúcar', pais:'Colombia', ciudad:'', lat:4.5709, lng:-74.2973, volumen:0, producto:'Azúcar', plataforma:'Go4WorldBusiness', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+573000000001' },
+    { id:'M050', empresa:'Comprador de Azúcar Blanca', pais:'Costa Rica', ciudad:'', lat:9.7489, lng:-83.7534, volumen:0, producto:'Azúcar blanca', plataforma:'Go4WorldBusiness', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+50690000000' },
+    { id:'M051', empresa:'Comprador de Azúcar', pais:'Panama', ciudad:'', lat:8.538, lng:-80.7821, volumen:0, producto:'Azúcar', plataforma:'Go4WorldBusiness', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+50790000000' },
+    { id:'M052', empresa:'Comprador de Azúcar', pais:'Ecuador', ciudad:'', lat:-1.8312, lng:-78.1834, volumen:0, producto:'Azúcar', plataforma:'Go4WorldBusiness', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+593900000000' },
+    { id:'M053', empresa:'Comprador de Azúcar', pais:'Bolivia', ciudad:'', lat:-16.2902, lng:-63.5887, volumen:0, producto:'Azúcar', plataforma:'Go4WorldBusiness', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+59170000000' },
+    { id:'M054', empresa:'Comprador de Azúcar', pais:'Argentina', ciudad:'', lat:-38.4161, lng:-63.6167, volumen:0, producto:'Azúcar', plataforma:'Go4WorldBusiness', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+549000000000' },
+    { id:'M055', empresa:'Comprador de Azúcar', pais:'Guyana', ciudad:'', lat:4.8604, lng:-58.9302, volumen:0, producto:'Azúcar', plataforma:'Go4WorldBusiness', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+5929000000' },
+    { id:'M056', empresa:'Comprador de Azúcar', pais:'Emiratos Arabes', ciudad:'', lat:23.4241, lng:53.8478, volumen:0, producto:'Azúcar', plataforma:'Go4WorldBusiness', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+971500000005' },
+    { id:'M057', empresa:'Comprador de Azúcar', pais:'Turquia', ciudad:'', lat:38.9637, lng:35.2433, volumen:0, producto:'Azúcar', plataforma:'Go4WorldBusiness', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+905000000002' },
+    { id:'M058', empresa:'Comprador de Azúcar', pais:'USA', ciudad:'', lat:37.0902, lng:-95.7129, volumen:0, producto:'Azúcar', plataforma:'Go4WorldBusiness', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+12130000001' },
+    { id:'M059', empresa:'Comprador de Azúcar', pais:'Colombia', ciudad:'', lat:4.5709, lng:-74.2973, volumen:0, producto:'Azúcar refinada', plataforma:'Tridge', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+573000000002' },
+    { id:'M060', empresa:'Comprador de Azúcar', pais:'Colombia', ciudad:'', lat:4.5709, lng:-74.2973, volumen:0, producto:'Azúcar', plataforma:'MarketInsideData', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M061', empresa:'Comprador de Azúcar', pais:'Colombia', ciudad:'', lat:4.5709, lng:-74.2973, volumen:0, producto:'Azúcar', plataforma:'MarketInsideData', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M062', empresa:'Comprador de Azúcar', pais:'Colombia', ciudad:'', lat:4.5709, lng:-74.2973, volumen:0, producto:'Azúcar', plataforma:'MarketInsideData', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M063', empresa:'Comprador de Azúcar', pais:'Costa Rica', ciudad:'', lat:9.7489, lng:-83.7534, volumen:0, producto:'White Sugar', plataforma:'Tridge', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+50690000001' },
+    { id:'M064', empresa:'Comprador de Azúcar', pais:'No detectado', ciudad:'', lat:0, lng:0, volumen:0, producto:'White Sugar', plataforma:'Tridge', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'' },
+    { id:'M065', empresa:'Comprador de Azúcar', pais:'Colombia', ciudad:'', lat:4.5709, lng:-74.2973, volumen:0, producto:'Azúcar', plataforma:'Citaco', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+573000000003' },
+    { id:'M066', empresa:'Comprador de Azúcar', pais:'Ecuador', ciudad:'', lat:-1.8312, lng:-78.1834, volumen:0, producto:'Azúcar', plataforma:'Citaco', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+593900000001' },
+    { id:'M067', empresa:'Comprador de Azúcar', pais:'USA', ciudad:'', lat:37.0902, lng:-95.7129, volumen:0, producto:'Azúcar', plataforma:'Citaco', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+12130000002' },
+    { id:'M068', empresa:'Buyer', pais:'Alemania', ciudad:'', lat:51.1657, lng:10.4515, volumen:0, producto:'Azúcar refinada blanca ICUMSA 45', plataforma:'Go4WorldBusiness', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+491700000000' },
+    { id:'M069', empresa:'Buyer', pais:'Kuwait', ciudad:'', lat:29.3759, lng:47.9774, volumen:0, producto:'Azúcar refinada blanca ICUMSA 45', plataforma:'TradeKey', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+96590000001' },
+    { id:'M070', empresa:'Comprador de Azúcar', pais:'Argentina', ciudad:'', lat:-38.4161, lng:-63.6167, volumen:0, producto:'Azúcar refinada y sin refinar', plataforma:'Instagram', urgencia:'media', contacto:'Contacto via Instagram', c3:5, telefono:'+549000000001' },
+    { id:'M071', empresa:'Comprador de Azúcar', pais:'Colombia', ciudad:'', lat:4.5709, lng:-74.2973, volumen:0, producto:'Azúcar', plataforma:'Instagram', urgencia:'media', contacto:'Contacto via Instagram', c3:3, telefono:'+573000000004' },
+    { id:'M072', empresa:'Comprador de Azúcar', pais:'Chile', ciudad:'', lat:-35.6751, lng:-71.543, volumen:0, producto:'Azúcar', plataforma:'Slideshare', urgencia:'media', contacto:'Contacto via Slideshare', c3:3, telefono:'+56900000000' },
+    { id:'M073', empresa:'Comprador de Azúcar', pais:'Mexico', ciudad:'', lat:23.6345, lng:-102.5528, volumen:0, producto:'Azúcar', plataforma:'proveedores.com', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+521900000000' },
+    { id:'M074', empresa:'Comprador de Azúcar', pais:'España', ciudad:'', lat:40.4637, lng:-3.7492, volumen:0, producto:'Azúcar', plataforma:'proveedores.com', urgencia:'media', contacto:'Contacto via plataforma', c3:3, telefono:'+34600000000' },
+    { id:'M075', empresa:'Anthony', pais:'UAE', ciudad:'Dubai', lat:25.2048, lng:55.2708, volumen:0, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+971500000006' },
+    { id:'M076', empresa:'Dmitry Winner', pais:'Arabia Saudita', ciudad:'Riad', lat:24.7136, lng:46.6753, volumen:333, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+966500000000' },
+    { id:'M077', empresa:'Rayna Lindsey (Dossix Global LLC)', pais:'USA', ciudad:'Miami', lat:25.7617, lng:-80.1918, volumen:125, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:5, telefono:'+13050000000' },
+    { id:'M078', empresa:'Ulita Billings', pais:'Sudafrica', ciudad:'Durban', lat:-29.8587, lng:31.0218, volumen:8333, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+27730000000' },
+    { id:'M079', empresa:'Zia Mustafa', pais:'Pakistan', ciudad:'', lat:30.3753, lng:69.3451, volumen:0, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+923000000002' },
+    { id:'M080', empresa:'Ruben', pais:'Brasil', ciudad:'', lat:-14.235, lng:-51.9253, volumen:0, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+551100000000' },
+    { id:'M081', empresa:'Leboaqang Moruti', pais:'Botsuana', ciudad:'', lat:-22.3285, lng:24.6849, volumen:34, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+26770000000' },
+    { id:'M082', empresa:'Mehmet Sediki', pais:'EAU', ciudad:'', lat:23.4241, lng:53.8478, volumen:250, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+971500000007' },
+    { id:'M083', empresa:'Varun Beverages Lanka', pais:'Sri Lanka', ciudad:'', lat:7.8731, lng:80.7718, volumen:0, producto:'Azúcar refinada', plataforma:'Seair', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M084', empresa:'Fonterra Brands Lanka', pais:'Sri Lanka', ciudad:'', lat:7.8731, lng:80.7718, volumen:0, producto:'Azúcar refinada', plataforma:'Seair', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M085', empresa:'R G Brothers', pais:'Sri Lanka', ciudad:'', lat:7.8731, lng:80.7718, volumen:0, producto:'Azúcar refinada', plataforma:'Trademo', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M086', empresa:'Veronica Banini', pais:'Ghana', ciudad:'', lat:7.9465, lng:-1.0232, volumen:0, producto:'No detectado', plataforma:'TradeImeX', urgencia:'baja', contacto:'No detectado', c3:0, telefono:'' },
+    { id:'M087', empresa:'Daniel I.S. Addai', pais:'Ghana', ciudad:'', lat:7.9465, lng:-1.0232, volumen:0, producto:'No detectado', plataforma:'TradeImeX', urgencia:'baja', contacto:'No detectado', c3:0, telefono:'' },
+    { id:'M088', empresa:'Adiplus SAC', pais:'Peru', ciudad:'', lat:-9.19, lng:-75.0152, volumen:50, producto:'Azúcar blanca refinada', plataforma:'Instagram', urgencia:'media', contacto:'Contacto via Instagram', c3:5, telefono:'+51900000000' },
+    { id:'M089', empresa:'HVStore SpA', pais:'Chile', ciudad:'', lat:-35.6751, lng:-71.543, volumen:25, producto:'Azúcar', plataforma:'Instagram', urgencia:'media', contacto:'Contacto via Instagram', c3:5, telefono:'+56900000001' },
+    { id:'M090', empresa:'Alimentika', pais:'Chile', ciudad:'', lat:-35.6751, lng:-71.543, volumen:25, producto:'Azúcar blanca', plataforma:'Instagram', urgencia:'media', contacto:'Contacto via Instagram', c3:5, telefono:'+56900000002' },
+    { id:'M091', empresa:'Facilitadora B2B', pais:'Senegal', ciudad:'', lat:14.4974, lng:-14.4524, volumen:100, producto:'No detectado', plataforma:'Facebook', urgencia:'media', contacto:'Contacto via Facebook', c3:3, telefono:'+22170000000' },
+    { id:'M092', empresa:'Grossiste Sucre Dakar', pais:'Senegal', ciudad:'', lat:14.4974, lng:-14.4524, volumen:75000, producto:'No detectado', plataforma:'Facebook', urgencia:'media', contacto:'Contacto via Facebook', c3:3, telefono:'+22170000001' },
+    { id:'M093', empresa:'MZURI SWEET LIMITED', pais:'Kenia', ciudad:'', lat:-0.0236, lng:37.9062, volumen:400, producto:'Azúcar refinada blanca', plataforma:'Seair', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M094', empresa:'RIFT VALLEY BOTTLERS LTD', pais:'Kenia', ciudad:'', lat:-0.0236, lng:37.9062, volumen:130, producto:'Azúcar refinada', plataforma:'Seair', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M095', empresa:'ANSA Trading', pais:'Kenia', ciudad:'', lat:-0.0236, lng:37.9062, volumen:300, producto:'Azúcar refinada', plataforma:'Seair', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M096', empresa:'Maritime Transport and Logistics', pais:'Togo', ciudad:'', lat:8.6195, lng:0.8248, volumen:0, producto:'Azúcar refinada', plataforma:'Trademo', urgencia:'media', contacto:'No detectado', c3:3, telefono:'' },
+    { id:'M097', empresa:'Don Gato Supermercado Mayorista', pais:'Ecuador', ciudad:'', lat:-1.8312, lng:-78.1834, volumen:0, producto:'Azúcar', plataforma:'TikTok', urgencia:'media', contacto:'Contacto via TikTok', c3:3, telefono:'+593900000002' },
+    { id:'M098', empresa:'Comercializadora Pandeazúcar', pais:'Ecuador', ciudad:'', lat:-1.8312, lng:-78.1834, volumen:0, producto:'Azúcar', plataforma:'Instagram', urgencia:'media', contacto:'Contacto via Instagram', c3:3, telefono:'+593900000003' },
+    { id:'M099', empresa:'Grupo Santacatalina', pais:'Paraguay', ciudad:'', lat:-23.4425, lng:-58.4438, volumen:100, producto:'Azúcar', plataforma:'QuimiNet', urgencia:'media', contacto:'Contacto via QuimiNet', c3:3, telefono:'+595900000000' },
+    { id:'M100', empresa:'A2 Global', pais:'Nigeria', ciudad:'Lagos', lat:6.5244, lng:3.3792, volumen:0, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+234900000002' },
+    { id:'M101', empresa:'Global Trading Links', pais:'Nigeria', ciudad:'Lagos', lat:6.5244, lng:3.3792, volumen:0, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+234900000003' },
+    { id:'M102', empresa:'Wilmer Ibarra', pais:'Ecuador', ciudad:'Guayaquil', lat:-2.17, lng:-79.92, volumen:0, producto:'No detectado', plataforma:'LinkedIn', urgencia:'baja', contacto:'LinkedIn', c3:5, telefono:'+593900000004' },
+    { id:'M103', empresa:'Daniel Amollo', pais:'Kenia', ciudad:'Nairobi', lat:-1.2864, lng:36.8172, volumen:5000, producto:'ICUMSA 45', plataforma:'LinkedIn', urgencia:'media', contacto:'LinkedIn', c3:5, telefono:'+254700000000' },
+    { id:'M104', empresa:'Chennai Sugar Brokers', pais:'India', ciudad:'Chennai', lat:13.0827, lng:80.2707, volumen:10000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+919000000008' },
+    { id:'M105', empresa:'Dubai Sweeteners', pais:'UAE', ciudad:'Dubai', lat:25.2048, lng:55.2708, volumen:15000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+971500000008' },
+    { id:'M106', empresa:'Jakarta Sugar Importer', pais:'Indonesia', ciudad:'Jakarta', lat:-6.2088, lng:106.8456, volumen:8000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+628000000000' },
+    { id:'M107', empresa:'Kolkata Sweeteners', pais:'India', ciudad:'Kolkata', lat:22.5726, lng:88.3639, volumen:12000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+919000000009' },
+    { id:'M108', empresa:'Lagos Commodities', pais:'Nigeria', ciudad:'Lagos', lat:6.5244, lng:3.3792, volumen:20000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+234900000004' },
+    { id:'M109', empresa:'Mumbai Sugar Traders', pais:'India', ciudad:'Mumbai', lat:19.076, lng:72.8777, volumen:9000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+919000000010' },
+    { id:'M110', empresa:'Nairobi Sugar Brokers', pais:'Kenia', ciudad:'Nairobi', lat:-1.2864, lng:36.8172, volumen:4000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+254700000001' },
+    { id:'M111', empresa:'Riyadh Sweeteners', pais:'Arabia Saudita', ciudad:'Riad', lat:24.7136, lng:46.6753, volumen:6000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+966500000001' },
+    { id:'M112', empresa:'Shanghai Sugar Importers', pais:'China', ciudad:'Shanghai', lat:31.2304, lng:121.4737, volumen:25000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+8613900000005' },
+    { id:'M113', empresa:'Singapore Commodities', pais:'Singapur', ciudad:'Singapur', lat:1.3521, lng:103.8198, volumen:10000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+6590000000' },
+    { id:'M114', empresa:'Tokyo Sugar Importer', pais:'Japon', ciudad:'Tokyo', lat:35.6762, lng:139.6503, volumen:12000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+819000000000' },
+    { id:'M115', empresa:'Algiers Sugar Brokers', pais:'Argelia', ciudad:'Argel', lat:36.7538, lng:3.0588, volumen:8000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+213600000000' },
+    { id:'M116', empresa:'Casablanca Sweeteners', pais:'Marruecos', ciudad:'Casablanca', lat:33.5731, lng:-7.5898, volumen:15000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+212600000001' },
+    { id:'M117', empresa:'Dakar Sugar Traders', pais:'Senegal', ciudad:'Dakar', lat:14.7167, lng:-17.4677, volumen:7000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+22170000002' },
+    { id:'M118', empresa:'Khartoum Sugar Importer', pais:'Sudan', ciudad:'Jartum', lat:15.5007, lng:32.5599, volumen:3000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+249900000000' },
+    { id:'M119', empresa:'Maputo Sweeteners', pais:'Mozambique', ciudad:'Maputo', lat:-25.9692, lng:32.5732, volumen:2000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+258800000000' },
+    { id:'M120', empresa:'Accra Commodities', pais:'Ghana', ciudad:'Accra', lat:5.6037, lng:-0.187, volumen:10000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+23390000001' },
+    { id:'M121', empresa:'Lusaka Sugar Brokers', pais:'Zambia', ciudad:'Lusaka', lat:-15.3875, lng:28.3228, volumen:1500, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+260900000000' },
+    { id:'M122', empresa:'Harare Sweeteners', pais:'Zimbabwe', ciudad:'Harare', lat:-17.8252, lng:31.0335, volumen:1200, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+263700000000' },
+    { id:'M123', empresa:'Gaborone Sugar Importer', pais:'Botsuana', ciudad:'Gaborone', lat:-24.6282, lng:25.9231, volumen:800, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+26770000001' },
+    { id:'M124', empresa:'Windhoek Sweeteners', pais:'Namibia', ciudad:'Windhoek', lat:-22.5609, lng:17.0658, volumen:600, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+264800000000' },
+    { id:'M125', empresa:'Kampala Sugar Traders', pais:'Uganda', ciudad:'Kampala', lat:0.3476, lng:32.5825, volumen:2000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+256700000000' },
+    { id:'M126', empresa:'Dar es Salaam Sweeteners', pais:'Tanzania', ciudad:'Dar es Salaam', lat:-6.7924, lng:39.2083, volumen:2500, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+255700000000' },
+    { id:'M127', empresa:'Lilongwe Sugar Importer', pais:'Malawi', ciudad:'Lilongwe', lat:-13.9626, lng:33.7741, volumen:1000, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+265900000000' },
+    { id:'M128', empresa:'Antananarivo Sweeteners', pais:'Madagascar', ciudad:'Antananarivo', lat:-18.8792, lng:47.5079, volumen:500, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+261300000000' },
+    { id:'M129', empresa:'Port Louis Sugar Traders', pais:'Mauritius', ciudad:'Port Louis', lat:-20.1609, lng:57.5012, volumen:300, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+2305000000' },
+    { id:'M130', empresa:'Suva Sugar Importers', pais:'Fiji', ciudad:'Suva', lat:-18.1416, lng:178.4419, volumen:400, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+6799000000' },
+    { id:'M131', empresa:'Apia Sweeteners', pais:'Samoa', ciudad:'Apia', lat:-13.8314, lng:-171.7519, volumen:200, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+6857000000' },
+    { id:'M132', empresa:"Nuku'alofa Sugar Importer", pais:'Tonga', ciudad:"Nuku'alofa", lat:-21.1393, lng:-175.2049, volumen:150, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+6768000000' },
+    { id:'M133', empresa:'Port Moresby Sweeteners', pais:'Papua Nueva Guinea', ciudad:'Port Moresby', lat:-9.4438, lng:147.1803, volumen:300, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+67570000000' },
+    { id:'M134', empresa:'Honiara Sugar Traders', pais:'Islas Salomon', ciudad:'Honiara', lat:-9.4456, lng:159.9729, volumen:100, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+6778000000' },
+    { id:'M135', empresa:'Port Vila Sugar Importer', pais:'Vanuatu', ciudad:'Port Vila', lat:-17.7333, lng:168.3167, volumen:80, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+6785000000' },
+    { id:'M136', empresa:'Noumea Sweeteners', pais:'Nueva Caledonia', ciudad:'Noumea', lat:-22.2558, lng:166.4505, volumen:60, producto:'ICUMSA 45', plataforma:'TradeWheel', urgencia:'media', contacto:'Contacto via plataforma + nombre', c3:3, telefono:'+687700000' }
+];
+
+// =====================================================================
+//  DATOS EN USO (se inicializan con el fallback, luego se reemplazan si se carga CSV)
+// =====================================================================
+let leadsData = [...fallbackData];
+
+// =====================================================================
+//  FUNCIONES AUXILIARES
+// =====================================================================
+function getFlag(country) {
+    const map = {
+        'Etiopia':'🇪🇹','Filipinas':'🇵🇭','Oman':'🇴🇲','Nigeria':'🇳🇬','China':'🇨🇳','Hong Kong':'🇭🇰',
+        'Marruecos':'🇲🇦','India':'🇮🇳','Pakistan':'🇵🇰','Sri Lanka':'🇱🇰','UAE':'🇦🇪','Kuwait':'🇰🇼',
+        'Australia':'🇦🇺','Ghana':'🇬🇭','Togo':'🇹🇬','USA':'🇺🇸','Canada':'🇨🇦','Turkey':'🇹🇷',
+        'Bangladesh':'🇧🇩','Mali':'🇲🇱','Colombia':'🇨🇴','Costa Rica':'🇨🇷','Panama':'🇵🇦','Ecuador':'🇪🇨',
+        'Bolivia':'🇧🇴','Argentina':'🇦🇷','Guyana':'🇬🇾','Emiratos Arabes':'🇦🇪','Turquia':'🇹🇷',
+        'Alemania':'🇩🇪','Chile':'🇨🇱','Mexico':'🇲🇽','España':'🇪🇸','Arabia Saudita':'🇸🇦',
+        'Sudafrica':'🇿🇦','Botsuana':'🇧🇼','Senegal':'🇸🇳','Kenia':'🇰🇪','Paraguay':'🇵🇾',
+        'Indonesia':'🇮🇩','Japon':'🇯🇵','Argelia':'🇩🇿','Sudan':'🇸🇩','Mozambique':'🇲🇿',
+        'Zambia':'🇿🇲','Zimbabwe':'🇿🇼','Namibia':'🇳🇦','Uganda':'🇺🇬','Tanzania':'🇹🇿',
+        'Malawi':'🇲🇼','Madagascar':'🇲🇬','Mauritius':'🇲🇺','Fiji':'🇫🇯','Samoa':'🇼🇸',
+        'Tonga':'🇹🇴','Papua Nueva Guinea':'🇵🇬','Islas Salomon':'🇸🇧','Vanuatu':'🇻🇺',
+        'Nueva Caledonia':'🇳🇨','Singapur':'🇸🇬','Peru':'🇵🇪'
+    };
+    return map[country] || '🌍';
+}
+
+function openWhatsApp(lead) {
+    let phone = lead.telefono || '';
+    let digits = phone.replace(/\D/g, '');
+    if (!digits) digits = '59170000000';
+    const url = `https://wa.me/${digits}?text=${encodeURIComponent(
+        `Hola, estoy interesado en su oferta de ${lead.producto} (${lead.volumen > 0 ? lead.volumen.toLocaleString()+' TM/mes' : 'volumen a confirmar'}). Vi su oportunidad en la plataforma.`
+    )}`;
+    window.open(url, '_blank');
+}
+
+// =====================================================================
+//  RENDER CARRUSEL
+// =====================================================================
+const scrollContainer = document.getElementById('urgentScroll');
+function renderUrgentCards() {
+    scrollContainer.innerHTML = '';
+    if (leadsData.length === 0) {
+        scrollContainer.innerHTML = '<p style="color:var(--muted);padding:20px;">No hay datos cargados.</p>';
+        return;
+    }
+    leadsData.forEach(lead => {
+        if (lead.pais === 'No detectado' || lead.lat === 0) return;
+        const card = document.createElement('div');
+        card.className = 'business-card ' + lead.urgencia;
+        let badgeClass = lead.urgencia;
+        let badgeText = lead.urgencia === 'urgente' ? '🔴 URGENTE' : lead.urgencia === 'media' ? '🟡 ATENCIÓN RÁPIDA' : '🟢 POTENCIAL';
+        card.innerHTML = `
+            <div class="card-header">
+                <span class="card-country"><span class="flag">${getFlag(lead.pais)}</span> ${lead.pais}</span>
+                <span class="card-badge ${badgeClass}">${badgeText}</span>
+            </div>
+            <div class="card-company">${lead.empresa}</div>
+            <div class="card-details">
+                <span class="card-volume">${lead.volumen > 0 ? lead.volumen.toLocaleString() : 'N/D'} <span class="vol-unit">TM/mes</span></span>
+                <span class="card-product">${lead.producto.slice(0,14)}${lead.producto.length>14?'…':''}</span>
+            </div>
+            <div class="card-action">
+                <button class="btn-contact" data-lead-id="${lead.id}">📱 Contactar</button>
+                <button class="btn-detail" data-lead-id="${lead.id}">➡️</button>
+            </div>
+        `;
+        scrollContainer.appendChild(card);
+    });
+}
+
+// =====================================================================
+//  RENDER LEADS Y RANKING
+// =====================================================================
+function renderLeadsList() {
+    const container = document.getElementById('leadsContainer');
+    container.innerHTML = '';
+    if (leadsData.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;">No hay datos cargados.</p>';
+        return;
+    }
+    leadsData.forEach(lead => {
+        if (lead.pais === 'No detectado') return;
+        const div = document.createElement('div');
+        div.className = 'lead-item';
+        const badgeClass = lead.urgencia;
+        const badgeText = lead.urgencia === 'urgente' ? '🔴 Urgente' : lead.urgencia === 'media' ? '🟡 Atención rápida' : '🟢 Potencial';
+        div.innerHTML = `
+            <div class="info">
+                <span class="name">${lead.empresa}</span>
+                <span class="meta">${lead.pais} ${lead.ciudad ? '- '+lead.ciudad : ''} · ${lead.volumen > 0 ? lead.volumen.toLocaleString()+' TM/mes' : 'Volumen N/D'} · ${lead.producto}</span>
+            </div>
+            <span class="badge ${badgeClass}">${badgeText}</span>
+            <button class="contact-btn" data-lead-id="${lead.id}">Contactar</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function renderRankingList() {
+    const container = document.getElementById('rankingContainer');
+    container.innerHTML = '';
+    if (leadsData.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;">No hay datos cargados.</p>';
+        return;
+    }
+    const ranking = {};
+    leadsData.forEach(l => {
+        if (l.pais === 'No detectado' || l.volumen === 0) return;
+        if (!ranking[l.pais]) ranking[l.pais] = 0;
+        ranking[l.pais] += l.volumen;
+    });
+    const sorted = Object.entries(ranking).sort((a,b) => b[1] - a[1]).slice(0, 10);
+    if (sorted.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;">No hay datos de volumen para ranking.</p>';
+        return;
+    }
+    sorted.forEach(([pais, vol]) => {
+        const div = document.createElement('div');
+        div.className = 'lead-item';
+        div.style.borderLeftColor = 'var(--blue)';
+        div.innerHTML = `
+            <div class="info">
+                <span class="name">${pais}</span>
+                <span class="meta">${vol.toLocaleString()} TM/mes</span>
+            </div>
+            <span class="badge baja">Top</span>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// =====================================================================
+//  ACTUALIZACIÓN DE MÉTRICAS Y GRÁFICOS
+// =====================================================================
+function updateMetrics() {
+    const totalLeads = leadsData.length;
+    const countries = new Set(leadsData.map(l => l.pais).filter(p => p && p !== 'No detectado'));
+    const totalCountries = countries.size;
+    const directos = leadsData.filter(l => l.contacto && l.contacto !== 'No detectado' && l.contacto !== '').length;
+    const totalVolumen = leadsData.reduce((sum, l) => sum + (l.volumen || 0), 0);
+    const leadsConVolumen = leadsData.filter(l => l.volumen > 0).length;
+    const mercadosActivos = new Set(leadsData.filter(l => l.volumen > 0).map(l => l.pais)).size;
+
+    document.getElementById('totalLeads').textContent = totalLeads;
+    document.getElementById('totalCountries').textContent = totalCountries;
+    document.getElementById('totalDirectos').textContent = directos;
+    document.getElementById('directChange').textContent = totalLeads > 0 ? '+12%' : '0%';
+
+    const volFormatted = totalVolumen >= 1e6 ? (totalVolumen/1e6).toFixed(1)+'M' : totalVolumen >= 1e3 ? (totalVolumen/1e3).toFixed(1)+'k' : totalVolumen.toString();
+    document.getElementById('totalVolumen').textContent = volFormatted || '0';
+    document.getElementById('leadsConVolumen').textContent = leadsConVolumen;
+    document.getElementById('totalMercados').textContent = mercadosActivos || totalCountries;
+    const pct = totalLeads > 0 ? Math.round((leadsConVolumen / totalLeads) * 100) : 0;
+    document.getElementById('volBar').style.width = Math.min(pct, 100)+'%';
+
+    const now = new Date();
+    const month = now.toLocaleString('es', { month: 'short' });
+    const year = now.getFullYear();
+    document.getElementById('summaryDate').textContent = totalLeads > 0 ? `Basado en ${totalLeads} leads · ${month} ${year}` : 'No hay datos cargados';
+    document.getElementById('statusVersion').textContent = totalLeads > 0 ? `v6-${totalLeads} leads` : 'v6 - sin datos';
+    document.getElementById('statusCountries').textContent = totalCountries;
+
+    // Top 5 países por demanda
+    const demandMap = {};
+    leadsData.forEach(l => {
+        if (l.volumen > 0 && l.pais && l.pais !== 'No detectado') {
+            if (!demandMap[l.pais]) demandMap[l.pais] = 0;
+            demandMap[l.pais] += l.volumen;
+        }
+    });
+    const sortedCountries = Object.entries(demandMap).sort((a,b) => b[1] - a[1]).slice(0, 5);
+    const top5Vol = sortedCountries.reduce((s, [_, v]) => s + v, 0);
+    const top1 = sortedCountries.length > 0 ? sortedCountries[0] : null;
+
+    // Actualizar SVG
+    const svg = document.querySelector('#demandChartContainer svg');
+    if (svg && sortedCountries.length === 5) {
+        const xPositions = [78, 178, 278, 378, 478];
+        const yBase = 182;
+        const yMin = 38;
+        const maxVol = sortedCountries[0][1];
+        const minVol = sortedCountries[sortedCountries.length-1][1] || 1;
+        const range = maxVol - minVol || 1;
+
+        const yCoords = sortedCountries.map(([_, vol]) => {
+            const y = yBase - ((vol - minVol) / range) * (yBase - yMin - 10);
+            return Math.max(yMin, Math.min(yBase, y));
+        });
+
+        const points = yCoords.map((y, i) => `${xPositions[i]} ${y}`).join(' L ');
+        const areaPath = `M${xPositions[0]} ${yCoords[0]} L ${points} L ${xPositions[xPositions.length-1]} ${yBase} L ${xPositions[0]} ${yBase} Z`;
+        const linePath = `M${xPositions[0]} ${yCoords[0]} L ${points}`;
+
+        document.getElementById('demandArea').setAttribute('d', areaPath);
+        document.getElementById('demandLine').setAttribute('d', linePath);
+
+        const pointsGroup = document.getElementById('demandPoints');
+        pointsGroup.innerHTML = yCoords.map((y, i) => `<circle cx="${xPositions[i]}" cy="${y}" r="5"/>`).join('');
+
+        const labelsGroup = document.getElementById('demandLabels');
+        const codes = sortedCountries.map(([p]) => {
+            const codeMap = {
+                'Hong Kong':'HK','China':'CN','Marruecos':'MA','India':'IN','Senegal':'SN',
+                'Brasil':'BR','Nigeria':'NG','UAE':'AE','Colombia':'CO','Ecuador':'EC',
+                'Argentina':'AR','Chile':'CL','Peru':'PE','Bolivia':'BO','Paraguay':'PY',
+                'Ghana':'GH','Kenia':'KE','Filipinas':'PH','Pakistan':'PK','Sri Lanka':'LK'
+            };
+            return codeMap[p] || p.slice(0,2).toUpperCase();
+        });
+        const volLabels = sortedCountries.map(([_, vol]) => (vol/1000).toFixed(1)+'k');
+        const labelXOffset = [-20, -10, -10, -10, -10];
+        const labelYOffset = [-16, -18, -18, -18, -18];
+        const valueXOffset = [-30, -30, -30, -30, -30];
+        const valueYOffset = [-6, -6, -6, -6, -6];
+
+        let labelsHtml = '';
+        for (let i=0; i<5; i++) {
+            const x = xPositions[i];
+            const y = yCoords[i];
+            labelsHtml += `<text x="${x + labelXOffset[i]}" y="${y + labelYOffset[i]}" class="lp-point-label">${codes[i]}</text>`;
+            labelsHtml += `<text x="${x + valueXOffset[i]}" y="${y + valueYOffset[i]}" class="lp-point-value">${volLabels[i]}</text>`;
+        }
+        labelsGroup.innerHTML = labelsHtml;
+
+        const axisXLabels = svg.querySelectorAll('text.lp-axis-label');
+        const countryNames = sortedCountries.map(([p]) => p);
+        axisXLabels.forEach((el, idx) => {
+            if (idx >= 4 && idx < 9) {
+                el.textContent = countryNames[idx-4] || '';
+            }
+        });
+    } else if (svg) {
+        document.getElementById('demandArea').setAttribute('d', 'M78 182 L478 182 L478 182 L78 182 Z');
+        document.getElementById('demandLine').setAttribute('d', '');
+        document.getElementById('demandPoints').innerHTML = '';
+        document.getElementById('demandLabels').innerHTML = '<text x="200" y="100" fill="var(--muted)" font-size="14">Sin datos suficientes</text>';
+    }
+
+    // Insights
+    const top1VolStr = top1 ? (top1[1]/1000).toFixed(1)+'k' : '0';
+    const top1Pct = top5Vol > 0 && top1 ? ((top1[1] / top5Vol) * 100).toFixed(1)+'%' : '0%';
+    const gap = sortedCountries.length > 1 ? (sortedCountries[0][1] - sortedCountries[1][1]) : 0;
+    const gapStr = (gap/1000).toFixed(1)+'k';
+    document.getElementById('insightTop5Vol').textContent = top5Vol > 0 ? (top5Vol/1000).toFixed(1)+'M' : '0';
+    document.getElementById('insightTop1Pct').textContent = top1Pct;
+    document.getElementById('insightTop1Gap').textContent = gapStr;
+
+    // Lista de países
+    const countryList = document.getElementById('topCountriesList');
+    if (sortedCountries.length === 5) {
+        const total = sortedCountries.reduce((s, [_,v]) => s+v, 0);
+        countryList.innerHTML = sortedCountries.map(([p, v]) => {
+            const pct = total > 0 ? ((v/total)*100).toFixed(1)+'%' : '0%';
+            const codeMap = {
+                'Hong Kong':'HK','China':'CN','Marruecos':'MA','India':'IN','Senegal':'SN',
+                'Brasil':'BR','Nigeria':'NG','UAE':'AE','Colombia':'CO','Ecuador':'EC',
+                'Argentina':'AR','Chile':'CL','Peru':'PE','Bolivia':'BO','Paraguay':'PY',
+                'Ghana':'GH','Kenia':'KE','Filipinas':'PH','Pakistan':'PK','Sri Lanka':'LK'
+            };
+            const code = codeMap[p] || p.slice(0,2).toUpperCase();
+            return `<span><b>${code}</b> ${p} <strong>${(v/1000).toFixed(1)}k</strong><small>${pct} del top 5</small></span>`;
+        }).join('');
+    } else {
+        countryList.innerHTML = '<span>Sin datos suficientes</span>';
+    }
+
+    // Plataformas
+    const platCount = {};
+    leadsData.forEach(l => {
+        if (l.plataforma && l.plataforma !== '') {
+            platCount[l.plataforma] = (platCount[l.plataforma] || 0) + 1;
+        }
+    });
+    const platSorted = Object.entries(platCount).sort((a,b) => b[1] - a[1]).slice(0, 5);
+    const maxPlat = platSorted.length > 0 ? platSorted[0][1] : 1;
+    const platformList = document.getElementById('platformList');
+    if (platSorted.length === 0) {
+        platformList.innerHTML = '<div><span>Sin datos</span></div>';
+    } else {
+        platformList.innerHTML = platSorted.map(([name, count]) => {
+            const pct = Math.round((count / maxPlat) * 100);
+            return `<div><span>${name}</span><i><em style="width:${pct}%"></em></i><strong>${count}</strong></div>`;
+        }).join('');
+    }
+}
+
+// =====================================================================
+//  MAPA
+// =====================================================================
+const UNAGRO_LAT = -17.783, UNAGRO_LNG = -63.182;
+const map = L.map('map', {
+    center: [UNAGRO_LAT, UNAGRO_LNG],
+    zoom: 2,
+    zoomControl: false,
+    attributionControl: false,
+    scrollWheelZoom: true
+});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© CartoDB',
+    subdomains: 'abcd',
+    maxZoom: 19
+}).addTo(map);
+setTimeout(() => map.invalidateSize(), 300);
+
+let leadMarkersGroup = L.layerGroup().addTo(map);
+const originGroup = L.layerGroup().addTo(map);
+const unagroMarker = L.marker([UNAGRO_LAT, UNAGRO_LNG], {
+    icon: L.divIcon({
+        className: 'unagro-marker',
+        html: `<div style="background:#1d4ed8;width:20px;height:20px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 20px rgba(29,78,216,0.8);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">U</div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    })
+}).addTo(map).bindPopup('<strong>UNAGRO S.A.</strong><br>Ingenio azucarero<br>Santa Cruz, Bolivia');
+
+const originIcon = (color, label) => L.divIcon({
+    className: 'origin-marker',
+    html: `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 24px ${color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;">${label}</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
+});
+L.marker([-14.235, -51.925], { icon: originIcon('#3b82f6', 'BR') }).addTo(originGroup).bindPopup('<strong>Brasil</strong><br>Principal exportador');
+L.marker([20.5937, 78.9629], { icon: originIcon('#ecc94b', 'IN') }).addTo(originGroup).bindPopup('<strong>India</strong><br>Segundo mayor exportador');
+L.marker([15.8700, 100.9925], { icon: originIcon('#48bb78', 'TH') }).addTo(originGroup).bindPopup('<strong>Tailandia</strong><br>Tercer mayor exportador');
+
+function updateMapMarkers() {
+    leadMarkersGroup.clearLayers();
+    if (leadsData.length === 0) return;
+    const leadIcon = (color) => L.divIcon({
+        className: 'lead-marker',
+        html: `<div style="background:${color};width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 16px ${color};"></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+    });
+    leadsData.forEach(lead => {
+        if (lead.lat === 0 || lead.lng === 0) return;
+        const color = lead.urgencia === 'urgente' ? '#e53e3e' : lead.urgencia === 'media' ? '#ecc94b' : '#48bb78';
+        const popup = `<strong>${lead.empresa}</strong><br>📍 ${lead.pais} ${lead.ciudad ? '- '+lead.ciudad : ''}<br>📦 ${lead.volumen > 0 ? lead.volumen.toLocaleString()+' TM/mes' : 'Volumen N/D'}<br>🏷️ ${lead.producto}<br>${lead.urgencia === 'urgente' ? '🔴 URGENTE' : lead.urgencia === 'media' ? '🟡 ATENCIÓN RÁPIDA' : '🟢 POTENCIAL'}<br>📞 ${lead.contacto}<br><button class="popup-btn" data-lead-id="${lead.id}">📱 Contactar</button>`;
+        const marker = L.marker([lead.lat, lead.lng], { icon: leadIcon(color) }).addTo(leadMarkersGroup);
+        marker.bindPopup(popup);
+    });
+}
+updateMapMarkers();
+
+document.getElementById('centerMapBtn').addEventListener('click', () => map.setView([UNAGRO_LAT, UNAGRO_LNG], 4, { animate: true, duration: 0.8 }));
+
+// =====================================================================
+//  CARGA AUTOMÁTICA DEL CSV (intenta reemplazar los datos de respaldo)
+// =====================================================================
+function loadCSV() {
+    fetch('datos.csv')
+        .then(response => {
+            if (!response.ok) throw new Error('CSV no encontrado');
+            return response.text();
+        })
+        .then(csvText => {
+            const parsed = parseCSV(csvText);
+            if (parsed && parsed.length > 0) {
+                leadsData = parsed;
+                console.log('CSV cargado correctamente, ' + leadsData.length + ' leads.');
+            } else {
+                console.warn('CSV vacío o inválido, se mantienen datos de respaldo.');
+            }
+        })
+        .catch(err => {
+            console.warn('No se pudo cargar datos.csv, usando datos de respaldo.', err.message);
+        })
+        .finally(() => {
+            // Actualizar toda la interfaz con los datos (respaldo o CSV)
+            renderUrgentCards();
+            renderLeadsList();
+            renderRankingList();
+            updateMetrics();
+            updateMapMarkers();
+            setTimeout(() => map.invalidateSize(), 300);
+        });
+}
+
+function parseCSV(csv) {
+    // Parser simple que maneja comillas
+    const lines = csv.split('\n').filter(line => line.trim() !== '');
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const idx = {
+        id: headers.indexOf('id'),
+        empresa: headers.indexOf('empresa'),
+        pais: headers.indexOf('pais'),
+        ciudad: headers.indexOf('ciudad'),
+        lat: headers.indexOf('lat'),
+        lng: headers.indexOf('lng'),
+        volumen: headers.indexOf('volumen'),
+        producto: headers.indexOf('producto'),
+        plataforma: headers.indexOf('plataforma'),
+        urgencia: headers.indexOf('urgencia'),
+        contacto: headers.indexOf('contacto'),
+        c3: headers.indexOf('c3'),
+        telefono: headers.indexOf('telefono')
+    };
+    const result = [];
+    for (let i = 1; i < lines.length; i++) {
+        // Usamos una expresión regular para manejar comillas
+        const cols = lines[i].match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g);
+        if (!cols) continue;
+        const row = {};
+        const getVal = (key) => {
+            const pos = idx[key];
+            if (pos !== undefined && pos < cols.length) {
+                let val = cols[pos].trim();
+                if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+                return val;
+            }
+            return '';
+        };
+        row.id = getVal('id') || `M${String(i).padStart(3,'0')}`;
+        row.empresa = getVal('empresa') || 'Sin nombre';
+        row.pais = getVal('pais') || 'No detectado';
+        row.ciudad = getVal('ciudad') || '';
+        row.lat = parseFloat(getVal('lat')) || 0;
+        row.lng = parseFloat(getVal('lng')) || 0;
+        row.volumen = parseFloat(getVal('volumen')) || 0;
+        row.producto = getVal('producto') || 'Sin especificar';
+        row.plataforma = getVal('plataforma') || 'Desconocida';
+        row.urgencia = getVal('urgencia') || 'media';
+        row.contacto = getVal('contacto') || 'No detectado';
+        row.c3 = parseInt(getVal('c3')) || 0;
+        row.telefono = getVal('telefono') || '';
+        result.push(row);
+    }
+    return result;
+}
+
+// =====================================================================
+//  NAVEGACIÓN
+// =====================================================================
+const navItems = document.querySelectorAll('.nav-item');
+const views = {
+    mapa: document.getElementById('view-mapa'),
+    leads: document.getElementById('view-leads'),
+    ranking: document.getElementById('view-ranking'),
+    contexto: document.getElementById('view-contexto')
+};
+navItems.forEach(item => {
+    item.addEventListener('click', function(e) {
+        e.preventDefault();
+        const view = this.dataset.view;
+        navItems.forEach(n => n.classList.remove('active'));
+        this.classList.add('active');
+        Object.values(views).forEach(v => v.classList.remove('active'));
+        if (views[view]) views[view].classList.add('active');
+        if (view === 'mapa') setTimeout(() => map.invalidateSize(), 200);
+        if (view === 'leads') renderLeadsList();
+        if (view === 'ranking') renderRankingList();
+    });
+});
+
+// =====================================================================
+//  EVENTOS DE CONTACTO
+// =====================================================================
+document.addEventListener('click', function(e) {
+    const target = e.target.closest('[data-lead-id]');
+    if (!target) return;
+    const lead = leadsData.find(l => l.id === target.dataset.leadId);
+    if (!lead) return;
+    if (target.classList.contains('btn-contact') || target.classList.contains('popup-btn') || target.classList.contains('contact-btn')) {
+        openWhatsApp(lead);
+    } else if (target.classList.contains('btn-detail')) {
+        alert(`Detalles de ${lead.empresa}\nPaís: ${lead.pais}\nProducto: ${lead.producto}\nVolumen: ${lead.volumen > 0 ? lead.volumen.toLocaleString()+' TM/mes' : 'N/D'}\nContacto: ${lead.contacto}\nTeléfono: ${lead.telefono || 'No disponible'}`);
+    }
+});
+
+// =====================================================================
+//  BOTÓN ACTUALIZAR (recarga el CSV)
+// =====================================================================
+document.getElementById('refreshBtn').addEventListener('click', function() {
+    loadCSV();
+});
+
+// =====================================================================
+//  INICIO: cargar CSV automáticamente
+// =====================================================================
+window.addEventListener('load', () => {
+    loadCSV();
+    // Configurar carrusel
+    setTimeout(() => {
+        const strip = document.querySelector('.urgent-strip');
+        if (!strip.querySelector('.carousel-arrow')) {
+            const left = document.createElement('button');
+            left.className = 'carousel-arrow left';
+            left.innerHTML = '‹';
+            left.addEventListener('click', () => scrollContainer.scrollBy({ left: -300, behavior: 'smooth' }));
+            const right = document.createElement('button');
+            right.className = 'carousel-arrow right';
+            right.innerHTML = '›';
+            right.addEventListener('click', () => scrollContainer.scrollBy({ left: 300, behavior: 'smooth' }));
+            strip.appendChild(left);
+            strip.appendChild(right);
+        }
+    }, 100);
+});
+window.addEventListener('resize', () => {
+    setTimeout(() => map.invalidateSize(), 100);
+});
+
+// Arrastre carrusel
+let isDown = false, startX, scrollLeftPos;
+scrollContainer.addEventListener('mousedown', (e) => {
+    isDown = true;
+    startX = e.pageX - scrollContainer.offsetLeft;
+    scrollLeftPos = scrollContainer.scrollLeft;
+    scrollContainer.style.cursor = 'grabbing';
+});
+scrollContainer.addEventListener('mouseleave', () => { isDown = false; scrollContainer.style.cursor = 'grab'; });
+scrollContainer.addEventListener('mouseup', () => { isDown = false; scrollContainer.style.cursor = 'grab'; });
+scrollContainer.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainer.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    scrollContainer.scrollLeft = scrollLeftPos - walk;
+});
+scrollContainer.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].pageX - scrollContainer.offsetLeft;
+    scrollLeftPos = scrollContainer.scrollLeft;
+}, { passive: true });
+scrollContainer.addEventListener('touchmove', (e) => {
+    const x = e.touches[0].pageX - scrollContainer.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    scrollContainer.scrollLeft = scrollLeftPos - walk;
+}, { passive: true });
+</script>
+</body>
+</html>
